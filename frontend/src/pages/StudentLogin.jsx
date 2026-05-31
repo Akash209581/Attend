@@ -21,8 +21,8 @@ export default function StudentLogin() {
             login({ role: 'student', rollNo: data.rollNo, name: data.name, section: data.section }, data.token);
             toast.success(
                 <div>
-                    <p className="font-semibold">Welcome, {data.name}! 👋</p>
-                    <p className="text-xs text-slate-400 mt-0.5">Developer: Akash Bandaru</p>
+                    <p className="font-semibold">Welcome, {data.name}! </p>
+                    <p className="text-xs text-slate-400 mt-0.5">Web Developer: Akash Bandaru</p>
                 </div>
             );
             navigate('/student/dashboard');
