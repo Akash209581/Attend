@@ -461,7 +461,7 @@ export default function StudentDashboard() {
     const [profile, setProfile] = useState(null);
     const [subjects, setSubjects] = useState([]);
     const [history, setHistory] = useState([]);
-    const [tab, setTab] = useState('charts');
+    const [tab, setTab] = useState('day');
     const [historyView, setHistoryView] = useState('all'); // 'all' | 'week' | 'month' | 'module'
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -496,9 +496,50 @@ export default function StudentDashboard() {
     const handleLogout = () => { logout(); navigate('/student/login'); };
 
     if (loading) {
+        const Skel = ({ cls }) => (
+            <div className={`animate-pulse bg-slate-200 dark:bg-slate-800 rounded-xl ${cls}`} />
+        );
         return (
-            <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex items-center justify-center">
-                <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
+                {/* Skeleton Navbar */}
+                <div className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center gap-4">
+                    <Skel cls="w-16 h-16 rounded-2xl" />
+                    <Skel cls="h-4 w-40" />
+                    <div className="flex-1" />
+                    <Skel cls="h-8 w-8 rounded-lg" />
+                    <Skel cls="h-4 w-16" />
+                </div>
+                <main className="max-w-6xl mx-auto p-6 space-y-5">
+                    {/* Profile + circle */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2 bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800">
+                            <div className="flex gap-5">
+                                <Skel cls="w-16 h-16 rounded-2xl shrink-0" />
+                                <div className="flex-1 space-y-3">
+                                    <Skel cls="h-5 w-48" />
+                                    <Skel cls="h-4 w-32" />
+                                    <Skel cls="h-6 w-24 rounded-full" />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-3">
+                            <Skel cls="w-32 h-32 rounded-full" />
+                            <Skel cls="h-4 w-28" />
+                        </div>
+                    </div>
+                    {/* Tabs */}
+                    <Skel cls="h-12 w-full rounded-2xl" />
+                    {/* Chart area */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <Skel cls="h-24 rounded-2xl" />
+                        <Skel cls="h-24 rounded-2xl" />
+                        <Skel cls="h-24 rounded-2xl" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Skel cls="h-64 rounded-2xl" />
+                        <Skel cls="h-64 rounded-2xl" />
+                    </div>
+                </main>
             </div>
         );
     }
@@ -593,8 +634,8 @@ export default function StudentDashboard() {
         <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
             {/* Top Navbar */}
             <header className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm px-6 py-3 flex items-center gap-4">
-                <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <img src={cseLogo} alt="CSE Logo" className="w-full h-full object-cover" />
+                <div className="w-16 h-16 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src={cseLogo} alt="CSE Logo" className="max-w-full max-h-full object-contain" />
                 </div>
                 <span className="font-semibold text-slate-800 dark:text-white text-sm flex-1">CSE Attendance Portal</span>
                 <button onClick={toggle}
@@ -816,6 +857,10 @@ export default function StudentDashboard() {
                     const daysAbsent = filteredHistory.filter(item => item.val === 0).length;
 
                     // Cumulative area chart options
+                    // Compute y-axis min: start from the student's first/minimum value (rounded down to nearest 5, with small buffer)
+                    const yMinRaw = slicedAvgs.length > 0 ? Math.min(...slicedAvgs) : 0;
+                    const yAxisMin = Math.max(0, Math.floor((yMinRaw - 5) / 5) * 5);
+
                     const lineOpts = {
                         chart: { type: 'area', height: 250, background: 'transparent', toolbar: { show: false }, zoom: { enabled: false }, animations: { speed: 800 } },
                         stroke: { curve: 'smooth', width: 3 },
@@ -823,7 +868,7 @@ export default function StudentDashboard() {
                         colors: ['#6366f1'],
                         markers: { size: 6, strokeWidth: 2, strokeColors: '#fff', fillColors: ['#6366f1'] },
                         xaxis: { categories: slicedLabels.length ? slicedLabels : ['No data'], labels: { style: { colors: ax, fontSize: '11px' }, rotate: -35 } },
-                        yaxis: { min: 0, max: 100, labels: { style: { colors: ax }, formatter: v => v + '%' } },
+                        yaxis: { min: yAxisMin, max: 100, labels: { style: { colors: ax }, formatter: v => v + '%' } },
                         annotations: { yaxis: [{ y: 75, borderColor: '#f43f5e', strokeDashArray: 4, label: { text: '75% Min', style: { color: '#fff', background: '#f43f5e', fontSize: '10px' } } }] },
                         grid: { borderColor: gr },
                         dataLabels: { enabled: slicedLabels.length <= 12, formatter: v => v + '%', style: { fontSize: '11px' }, background: { enabled: true, padding: 4, borderRadius: 4 } },
@@ -901,7 +946,7 @@ export default function StudentDashboard() {
                             <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl px-4 py-3 flex items-center gap-3">
                                 <CalendarDays size={15} className="text-indigo-500 shrink-0" />
                                 <p className="text-xs text-indigo-700 dark:text-indigo-300">
-                                    <span className="font-semibold">CRT Attendance Period:</span> 22-May-2026 to present · {crtHistory.length} upload{crtHistory.length !== 1 ? 's' : ''} recorded
+                                    <span className="font-semibold">CRT Attendance Period:</span> 22-May-2026 to present
                                 </p>
                             </div>
 

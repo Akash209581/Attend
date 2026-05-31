@@ -39,8 +39,8 @@ export default function AdminLogin() {
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
                     {/* Icon */}
                     <div className="flex flex-col items-center mb-8">
-                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-xl mb-4 overflow-hidden border border-slate-200/10">
-                            <img src={cseLogo} alt="CSE Logo" className="w-full h-full object-cover" />
+                        <div className="w-24 h-24 flex items-center justify-center mb-4 overflow-hidden">
+                            <img src={cseLogo} alt="CSE Logo" className="max-w-full max-h-full object-contain" />
                         </div>
                         <h1 className="text-2xl font-bold text-white">Admin Login</h1>
                         <p className="text-slate-400 text-sm mt-1">CSE Attendance Management System</p>

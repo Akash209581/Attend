@@ -23,8 +23,8 @@ export default function Sidebar() {
         <aside className="w-64 shrink-0 bg-gradient-to-b from-indigo-950 to-slate-900 flex flex-col shadow-2xl">
             {/* Logo */}
             <div className="flex items-center gap-3 px-6 py-5 border-b border-indigo-800/50">
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-lg overflow-hidden border border-slate-200/10 shrink-0">
-                    <img src={cseLogo} alt="CSE Logo" className="w-full h-full object-cover" />
+                <div className="w-14 h-14 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img src={cseLogo} alt="CSE Logo" className="max-w-full max-h-full object-contain" />
                 </div>
                 <div>
                     <p className="text-white font-bold text-sm leading-tight">CSE Attendance</p>

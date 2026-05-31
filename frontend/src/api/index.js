@@ -9,11 +9,12 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Auto-logout on 401
+// Auto-logout on 401 — but NOT on login routes (wrong credentials should show error, not redirect)
 api.interceptors.response.use(
     (res) => res,
     (err) => {
-        if (err.response?.status === 401) {
+        const isAuthRoute = err.config?.url?.includes('/auth/');
+        if (err.response?.status === 401 && !isAuthRoute) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             window.location.href = '/cse_Attendance/';
