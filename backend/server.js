@@ -12,6 +12,10 @@ const initDb = require('./initDb');
 
 const app = express();
 
+// Trust nginx reverse proxy — required for express-rate-limit to correctly
+// read the client IP from the X-Forwarded-For header set by nginx.
+app.set('trust proxy', 1);
+
 // 1. Security Headers (Helmet)
 app.use(helmet());
 
