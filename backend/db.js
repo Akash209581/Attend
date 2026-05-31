@@ -7,9 +7,12 @@ dotenv.config();
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    max: 3,                        // Neon free tier: keep connections low
+    min: 0,                        // Allow pool to go fully idle
+    idleTimeoutMillis: 10000,      // Release idle connections after 10s (before Neon kills them)
+    connectionTimeoutMillis: 10000, // 10s timeout for Neon cold starts
+    keepAlive: true,               // Prevent silent connection drops
+    keepAliveInitialDelayMillis: 10000,
 });
 
 pool.on('error', (err) => {
