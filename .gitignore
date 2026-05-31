@@ -2,7 +2,12 @@
 *.xlsx
 *.xls
 *.csv
+# Ignore JSON data files but allow npm config files
 *.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!jsconfig.json
 
 # Credentials and secrets
 .env
