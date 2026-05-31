@@ -47,6 +47,7 @@ exports.getSubjects = async (req, res) => {
 
 // ─── Get Attendance History ───────────────────────────────────────────────────
 exports.getHistory = async (req, res) => {
+    // Query 1: get all history records
     const result = await query(
         `SELECT id, roll_no, name, section, year, upload_date, total_percentage, training, counseling
          FROM attendance_records
@@ -56,31 +57,42 @@ exports.getHistory = async (req, res) => {
         [req.user.rollNo]
     );
 
-    const records = await Promise.all(result.rows.map(async (r) => {
-        const subjRes = await query(
-            'SELECT subject, attended, total, percentage FROM attendance_subjects WHERE attendance_id = $1',
-            [r.id]
-        );
-        return {
-            _id: r.id,
-            rollNo: r.roll_no,
-            name: r.name,
-            section: r.section,
-            year: r.year,
-            uploadDate: r.upload_date,
-            totalPercentage: parseFloat(r.total_percentage) || 0,
-            training: r.training,
-            counseling: r.counseling,
-            subjects: subjRes.rows.map(s => ({
-                subject: s.subject,
-                attended: s.attended,
-                total: s.total,
-                percentage: parseFloat(s.percentage) || 0,
-            })),
-        };
-    }));
+    if (result.rows.length === 0) return res.json([]);
 
-    res.json(records);
+    const recordIds = result.rows.map(r => r.id);
+
+    // Query 2: fetch all subjects for all records in ONE query (fixes N+1 problem)
+    const subjRes = await query(
+        `SELECT attendance_id, subject, attended, total, percentage
+         FROM attendance_subjects
+         WHERE attendance_id = ANY($1::int[])`,
+        [recordIds]
+    );
+
+    // Group subjects by attendance_id in memory
+    const subjMap = {};
+    for (const s of subjRes.rows) {
+        if (!subjMap[s.attendance_id]) subjMap[s.attendance_id] = [];
+        subjMap[s.attendance_id].push({
+            subject: s.subject,
+            attended: s.attended,
+            total: s.total,
+            percentage: parseFloat(s.percentage) || 0,
+        });
+    }
+
+    res.json(result.rows.map(r => ({
+        _id: r.id,
+        rollNo: r.roll_no,
+        name: r.name,
+        section: r.section,
+        year: r.year,
+        uploadDate: r.upload_date,
+        totalPercentage: parseFloat(r.total_percentage) || 0,
+        training: r.training,
+        counseling: r.counseling,
+        subjects: subjMap[r.id] || [],
+    })));
 };
 
 // ─── Section Mates for Student ────────────────────────────────────────────────
