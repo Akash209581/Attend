@@ -1,18 +1,21 @@
-const { Pool, types } = require('pg');
-// Return DATE columns (OID 1082) as YYYY-MM-DD strings to prevent timezone shifts
-types.setTypeParser(1082, (val) => val);
+const { Pool, neonConfig } = require('@neondatabase/serverless');
+const { types } = require('pg');
+const ws = require('ws');
 const dotenv = require('dotenv');
 dotenv.config();
 
+// Return DATE columns as YYYY-MM-DD strings to prevent timezone shifts
+types.setTypeParser(1082, (val) => val);
+
+// Use WebSocket transport in Node.js — avoids TCP connection timeouts
+// when the server is geographically far from Neon's US-East datacenter.
+neonConfig.webSocketConstructor = ws;
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 3,                        // Neon free tier: keep connections low
-    min: 0,                        // Allow pool to go fully idle
-    idleTimeoutMillis: 10000,      // Release idle connections after 10s (before Neon kills them)
-    connectionTimeoutMillis: 10000, // 10s timeout for Neon cold starts
-    keepAlive: true,               // Prevent silent connection drops
-    keepAliveInitialDelayMillis: 10000,
+    // No persistent TCP connections — each query opens/closes via WebSocket
+    // so no idle timeout, keepAlive, or max-connection tuning needed.
+    connectionTimeoutMillis: 15000,
 });
 
 pool.on('error', (err) => {
