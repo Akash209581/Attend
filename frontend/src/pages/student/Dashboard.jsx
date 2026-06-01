@@ -852,9 +852,9 @@ export default function StudentDashboard() {
                     const slicedChanges = filteredHistory.map(item => item.change);
 
                     const avg = dailyValues.length ? Math.round(dailyValues.reduce((s, v) => s + v, 0) / dailyValues.length) : 0;
-                    const totalDays = filteredHistory.length;
-                    const daysPresent = filteredHistory.filter(item => item.val > 0).length;
-                    const daysAbsent = filteredHistory.filter(item => item.val === 0).length;
+                    const totalDays = fullHistory.length;
+                    const daysPresent = fullHistory.filter(item => item.val > 0).length;
+                    const daysAbsent = fullHistory.filter(item => item.val === 0).length;
 
                     // Cumulative area chart options
                     // Compute y-axis min: start from the student's first/minimum value (rounded down to nearest 5, with small buffer)
