@@ -75,7 +75,8 @@ async function migrate() {
         sourceClient = await sourcePool.connect();
         console.log('✅ Connected to Source Database (Neon)');
     } catch (err) {
-        console.error('❌ Failed to connect to Source Database:', err.message);
+        console.error('❌ Failed to connect to Source Database:');
+        console.error(err);
         process.exit(1);
     }
 
@@ -83,8 +84,9 @@ async function migrate() {
         targetClient = await targetPool.connect();
         console.log('✅ Connected to Target Database (Server)');
     } catch (err) {
-        console.error('❌ Failed to connect to Target Database:', err.message);
-        sourceClient.release();
+        console.error('❌ Failed to connect to Target Database:');
+        console.error(err);
+        if (sourceClient) sourceClient.release();
         process.exit(1);
     }
 
