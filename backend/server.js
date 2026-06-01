@@ -44,6 +44,7 @@ const apiLimiter = rateLimit({
     max: 2000, // Increased limit per key to be safe for multiple requests
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { keyGenerator: false },
     keyGenerator: (req) => {
         // Limit based on Authorization header (JWT) if present, otherwise fall back to IP
         const authHeader = req.headers.authorization;
@@ -61,6 +62,7 @@ const authLimiter = rateLimit({
     max: 30, // 30 attempts per account/IP
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { keyGenerator: false },
     keyGenerator: (req) => {
         // Limit based on student rollNo or admin username, otherwise fall back to IP
         const ident = req.body?.rollNo || req.body?.username || req.ip;
