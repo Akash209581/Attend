@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -68,6 +69,43 @@ function AppRoutes() {
 }
 
 export default function App() {
+  useEffect(() => {
+    // Disable right click
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+    };
+
+    // Disable dragging (except for input fields)
+    const handleDragStart = (e) => {
+      if (!e.target || !e.target.tagName) return;
+      const tagName = e.target.tagName.toLowerCase();
+      if (tagName === 'input' || tagName === 'textarea') {
+        return;
+      }
+      e.preventDefault();
+    };
+
+    // Disable text selection start (except for input fields)
+    const handleSelectStart = (e) => {
+      if (!e.target || !e.target.tagName) return;
+      const tagName = e.target.tagName.toLowerCase();
+      if (tagName === 'input' || tagName === 'textarea' || e.target.isContentEditable) {
+        return;
+      }
+      e.preventDefault();
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('dragstart', handleDragStart);
+    document.addEventListener('selectstart', handleSelectStart);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('selectstart', handleSelectStart);
+    };
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
