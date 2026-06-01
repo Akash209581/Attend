@@ -41,19 +41,32 @@ app.use(cors({
 // 3. Rate Limiting
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 300, // limit each IP to 300 requests per windowMs
+    max: 2000, // Increased limit per key to be safe for multiple requests
     standardHeaders: true,
     legacyHeaders: false,
-    message: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
+    keyGenerator: (req) => {
+        // Limit based on Authorization header (JWT) if present, otherwise fall back to IP
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            return authHeader.split(' ')[1];
+        }
+        return req.ip;
+    },
+    message: { message: 'Too many requests, please try again after 15 minutes.' }
 });
 app.use('/cseakash/', apiLimiter);
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 15, // limit each IP to 15 login attempts per windowMs
+    max: 30, // 30 attempts per account/IP
     standardHeaders: true,
     legacyHeaders: false,
-    message: { message: 'Too many login attempts from this IP, please try again after 15 minutes.' }
+    keyGenerator: (req) => {
+        // Limit based on student rollNo or admin username, otherwise fall back to IP
+        const ident = req.body?.rollNo || req.body?.username || req.ip;
+        return ident.toString().toLowerCase().trim();
+    },
+    message: { message: 'Too many login attempts on this account, please try again after 15 minutes.' }
 });
 app.use('/cseakash/auth/', authLimiter);
 
