@@ -685,7 +685,18 @@ exports.searchStudent = async (req, res) => {
     sql += ' LIMIT 20';
 
     const res2 = await query(sql, params);
-    res.json(res2.rows);
+    
+    // Map underscore database columns to camelCase expected by the frontend
+    const students = res2.rows.map(r => ({
+        id: r.id,
+        rollNo: r.roll_no,
+        name: r.name,
+        section: r.section,
+        year: r.year,
+        totalPercentage: parseFloat(r.total_percentage) || 0
+    }));
+
+    res.json(students);
 };
 
 // ─── All Uploads ──────────────────────────────────────────────────────────────
