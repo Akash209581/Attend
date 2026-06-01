@@ -22,7 +22,7 @@ export default function StudentLogin() {
             toast.success(
                 <div>
                     <p className="font-semibold">Welcome, {data.name}! </p>
-                    <p className="text-xs text-slate-400 mt-0.5">Web Developer: Akash Bandaru</p>
+                    {/* <p className="text-xs text-slate-400 mt-0.5">Web Developer: Akash Bandaru</p> */}
                 </div>
             );
             navigate('/student/dashboard');
