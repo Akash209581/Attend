@@ -17,6 +17,7 @@ const {
     getDayWiseStats,
     getYearStudents,
     deleteUpload,
+    getStudentDetail,
 } = require('../controllers/adminController');
 
 // Multer in-memory storage for Excel files
@@ -56,6 +57,7 @@ router.get('/year/:year/students', getYearStudents);
 
 // Search
 router.get('/search', searchStudent);
+router.get('/students/detail/:rollNo', getStudentDetail);
 
 // Uploads history
 router.get('/uploads', getUploads);

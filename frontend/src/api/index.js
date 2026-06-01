@@ -35,6 +35,7 @@ export const getSectionStudents = (sec, page = 1) =>
 export const getYearStudents = (year, page = 1) =>
     api.get(`/admin/year/${year}/students?page=${page}&limit=50`);
 export const searchStudents = (params) => api.get('/admin/search', { params });
+export const getStudentDetail = (rollNo) => api.get(`/admin/students/detail/${rollNo}`);
 export const getUploads = () => api.get('/admin/uploads');
 export const deleteUpload = (id) => api.delete(`/admin/uploads/${id}`);
 export const getSubjectStats = () => api.get('/admin/subject-stats');

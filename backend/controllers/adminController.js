@@ -928,3 +928,103 @@ exports.deleteUpload = async (req, res) => {
     }
 };
 
+// ─── Get Single Student Full Details (Admin) ───────────────────────────────────
+exports.getStudentDetail = async (req, res) => {
+    const { rollNo } = req.params;
+    if (!rollNo) {
+        return res.status(400).json({ message: 'Roll number is required' });
+    }
+
+    const cleanRollNo = rollNo.toUpperCase().trim();
+
+    // 1. Fetch Student Profile
+    const studentQuery = await query(
+        `SELECT id, roll_no, name, section, year, email, total_percentage, training, counseling
+         FROM students WHERE roll_no = $1`,
+        [cleanRollNo]
+    );
+
+    if (studentQuery.rows.length === 0) {
+        return res.status(404).json({ message: 'Student not found' });
+    }
+
+    const student = studentQuery.rows[0];
+
+    // 2. Fetch Subject-wise Attendance
+    const subjectsQuery = await query(
+        `SELECT subject, attended, total, percentage 
+         FROM student_subjects 
+         WHERE student_id = $1 
+         ORDER BY subject`,
+        [student.id]
+    );
+
+    // 3. Fetch Attendance History (All daily records, sorted by date)
+    const historyQuery = await query(
+        `SELECT id, roll_no, name, section, year, upload_date, total_percentage, training, counseling
+         FROM attendance_records
+         WHERE roll_no = $1
+         ORDER BY upload_date DESC
+         LIMIT 100`,
+        [cleanRollNo]
+    );
+
+    let history = [];
+    if (historyQuery.rows.length > 0) {
+        const recordIds = historyQuery.rows.map(r => r.id);
+        const subjQuery = await query(
+            `SELECT attendance_id, subject, attended, total, percentage
+             FROM attendance_subjects
+             WHERE attendance_id = ANY($1::int[])`,
+            [recordIds]
+        );
+
+        // Group by attendance_id
+        const subjMap = {};
+        for (const s of subjQuery.rows) {
+            if (!subjMap[s.attendance_id]) subjMap[s.attendance_id] = [];
+            subjMap[s.attendance_id].push({
+                subject: s.subject,
+                attended: s.attended,
+                total: s.total,
+                percentage: parseFloat(s.percentage) || 0
+            });
+        }
+
+        history = historyQuery.rows.map(r => ({
+            _id: r.id,
+            rollNo: r.roll_no,
+            name: r.name,
+            section: r.section,
+            year: r.year,
+            uploadDate: r.upload_date,
+            totalPercentage: parseFloat(r.total_percentage) || 0,
+            training: r.training,
+            counseling: r.counseling,
+            subjects: subjMap[r.id] || []
+        }));
+    }
+
+    res.json({
+        profile: {
+            id: student.id,
+            rollNo: student.roll_no,
+            name: student.name,
+            section: student.section,
+            year: student.year,
+            email: student.email,
+            totalPercentage: parseFloat(student.total_percentage) || 0,
+            training: student.training,
+            counseling: student.counseling
+        },
+        subjects: subjectsQuery.rows.map(r => ({
+            subject: r.subject,
+            attended: r.attended,
+            total: r.total,
+            percentage: parseFloat(r.percentage) || 0
+        })),
+        history
+    });
+};
+
+
