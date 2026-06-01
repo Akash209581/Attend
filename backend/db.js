@@ -1,21 +1,16 @@
-const { Pool, neonConfig } = require('@neondatabase/serverless');
-const { types } = require('pg');
-const ws = require('ws');
+const { Pool, types } = require('pg');
 const dotenv = require('dotenv');
 dotenv.config();
 
 // Return DATE columns as YYYY-MM-DD strings to prevent timezone shifts
 types.setTypeParser(1082, (val) => val);
 
-// Use WebSocket transport in Node.js — avoids TCP connection timeouts
-// when the server is geographically far from Neon's US-East datacenter.
-neonConfig.webSocketConstructor = ws;
-
+// Local PostgreSQL (Docker on same server) — no timeout issues
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    // No persistent TCP connections — each query opens/closes via WebSocket
-    // so no idle timeout, keepAlive, or max-connection tuning needed.
-    connectionTimeoutMillis: 15000,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
 });
 
 pool.on('error', (err) => {
