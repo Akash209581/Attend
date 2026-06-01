@@ -31,6 +31,9 @@ export default function Search() {
             const { data } = await searchStudents({ rollNo: query, name: nameQuery });
             setResults(data);
             setSearched(true);
+            if (data && data.length > 0) {
+                handleSelectStudent(data[0]);
+            }
         } finally {
             setLoading(false);
         }
