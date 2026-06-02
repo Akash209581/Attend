@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 require('express-async-errors');
 
 dotenv.config();
@@ -44,14 +44,14 @@ const apiLimiter = rateLimit({
     max: 2000, // Increased limit per key to be safe for multiple requests
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { keyGenerator: false },
+    validate: { ip: false },
     keyGenerator: (req) => {
         // Limit based on Authorization header (JWT) if present, otherwise fall back to IP
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             return authHeader.split(' ')[1];
         }
-        return req.ip;
+        return ipKeyGenerator(req.ip);
     },
     message: { message: 'Too many requests, please try again after 15 minutes.' }
 });
@@ -62,11 +62,14 @@ const authLimiter = rateLimit({
     max: 30, // 30 attempts per account/IP
     standardHeaders: true,
     legacyHeaders: false,
-    validate: { keyGenerator: false },
+    validate: { ip: false },
     keyGenerator: (req) => {
         // Limit based on student rollNo or admin username, otherwise fall back to IP
-        const ident = req.body?.rollNo || req.body?.username || req.ip;
-        return ident.toString().toLowerCase().trim();
+        const ident = req.body?.rollNo || req.body?.username;
+        if (ident) {
+            return ident.toString().toLowerCase().trim();
+        }
+        return ipKeyGenerator(req.ip);
     },
     message: { message: 'Too many login attempts on this account, please try again after 15 minutes.' }
 });

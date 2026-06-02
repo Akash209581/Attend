@@ -74,12 +74,29 @@ async function initDb() {
         );
     `);
 
+    await query(`
+        CREATE TABLE IF NOT EXISTS student_assessments (
+            id SERIAL PRIMARY KEY,
+            roll_no VARCHAR(50) NOT NULL REFERENCES students(roll_no) ON DELETE CASCADE,
+            subject VARCHAR(100) NOT NULL,
+            assessment_name VARCHAR(100) NOT NULL,
+            marks NUMERIC(5,2) NOT NULL,
+            max_marks NUMERIC(5,2) NOT NULL DEFAULT 100,
+            percentage NUMERIC(5,2) GENERATED ALWAYS AS (ROUND((marks / max_marks) * 100, 2)) STORED,
+            upload_date DATE NOT NULL,
+            upload_batch_id INTEGER REFERENCES uploads(id) ON DELETE CASCADE,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+    `);
+
     // Indexes for performance
     await query(`CREATE INDEX IF NOT EXISTS idx_students_roll_no ON students(roll_no);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_students_year ON students(year);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_attendance_roll_date ON attendance_records(roll_no, upload_date);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance_records(upload_date);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_attendance_year ON attendance_records(year);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_assessments_roll ON student_assessments(roll_no);`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_assessments_subject ON student_assessments(subject);`);
 
     console.log('✅ Database schema initialized');
 }

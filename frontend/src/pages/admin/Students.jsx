@@ -29,7 +29,7 @@ export default function AdminStudents() {
 
     const [subjectNames, setSubjectNames] = useState([]);
     const [subjectFilter, setSubjectFilter] = useState('');   // '' = none
-    const [threshold, setThreshold] = useState('75');
+    const [threshold, setThreshold] = useState('all');
     const [subjectStudents, setSubjectStudents] = useState([]);
     const [subLoading, setSubLoading] = useState(false);
 
@@ -50,22 +50,24 @@ export default function AdminStudents() {
     useEffect(() => {
         if (subjectMode || !selected) return;
         setLoading(true);
-        getSectionStudents(selected, page)
+        const thresholdVal = threshold !== 'all' ? parseFloat(threshold) : null;
+        getSectionStudents(selected, page, thresholdVal)
             .then(({ data }) => { setStudents(data.students); setMeta(data); })
             .finally(() => setLoading(false));
-    }, [selected, page, subjectMode]);
+    }, [selected, page, subjectMode, threshold]);
 
     /* ── Load subject-filtered students ── */
     useEffect(() => {
         if (!subjectMode) return;
         setSubLoading(true);
-        getStudentsBySubject({ subject: subjectFilter, threshold, section: selected || 'all' })
+        const tVal = threshold === 'all' ? '101' : threshold;
+        getStudentsBySubject({ subject: subjectFilter, threshold: tVal, section: selected || 'all' })
             .then(({ data }) => setSubjectStudents(data))
             .finally(() => setSubLoading(false));
     }, [subjectFilter, threshold, selected, subjectMode]);
 
     /* ── Helpers ── */
-    const clearFilter = () => { setSubjectFilter(''); setSearch(''); };
+    const clearFilter = () => { setSubjectFilter(''); setThreshold('all'); setSearch(''); };
 
     const handleDownload = async () => {
         try {
@@ -84,7 +86,33 @@ export default function AdminStudents() {
 
     const filteredStudents = useMemo(() => {
         if (!search.trim()) return displayedStudents;
-        const q = search.toLowerCase();
+        const q = search.trim().toLowerCase();
+
+        // 1. If full 10-character alphanumeric roll number is typed, apply binary search
+        const isFullRollNo = q.length === 10 && /^[a-zA-Z\d]{10}$/.test(q);
+        if (isFullRollNo) {
+            // Sort a copy of displayedStudents by rollNo for binary search
+            const sorted = [...displayedStudents].sort((a, b) => 
+                (a.rollNo || '').localeCompare(b.rollNo || '', undefined, { sensitivity: 'base' })
+            );
+
+            let low = 0;
+            let high = sorted.length - 1;
+            while (low <= high) {
+                const mid = Math.floor((low + high) / 2);
+                const midVal = (sorted[mid].rollNo || '').toLowerCase();
+                if (midVal === q) {
+                    return [sorted[mid]];
+                } else if (midVal < q) {
+                    low = mid + 1;
+                } else {
+                    high = mid - 1;
+                }
+            }
+            return []; // No exact match found
+        }
+
+        // 2. Otherwise, fall back to standard partial filter scan
         return displayedStudents.filter(s =>
             s.name?.toLowerCase().includes(q) ||
             s.rollNo?.toLowerCase().includes(q) ||
@@ -107,7 +135,9 @@ export default function AdminStudents() {
         let sum = 0;
 
         filteredStudents.forEach(s => {
-            const pct = subjectMode ? getSubjectPct(s) : (s.totalPercentage ?? 0);
+            const rawPct = subjectMode ? getSubjectPct(s) : s.totalPercentage;
+            const parsed = parseFloat(rawPct);
+            const pct = isNaN(parsed) ? 0 : parsed;
             if (pct < 60) critical++;
             else if (pct < 75) borderline++;
             sum += pct;
@@ -135,58 +165,60 @@ export default function AdminStudents() {
                     {subjectMode && (
                         <button onClick={clearFilter}
                             className="ml-auto flex items-center gap-1 text-xs text-slate-400 hover:text-rose-500 transition-colors">
-                            <X size={12} /> Clear subject filter
+                            <X size={12} /> Clear batch filter
                         </button>
                     )}
                 </div>
 
-                <div className="flex flex-wrap items-end gap-3">
+                <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3">
 
-                    {/* 1. Section dropdown */}
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Section</label>
+                    {/* 1. Year dropdown */}
+                    <div className="flex flex-col gap-1 w-full sm:w-auto">
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Year</label>
                         <select value={selected} onChange={e => { setSelected(e.target.value); setPage(1); }}
-                            className={selectCls}>
-                            <option value="all">All Sections</option>
+                            className={`${selectCls} w-full`}>
+                            <option value="all">All Years</option>
                             {sections.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
 
-                    {/* 2. Subject dropdown */}
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Subject</label>
+                    {/* 2. Batch dropdown */}
+                    <div className="flex flex-col gap-1 w-full sm:w-auto">
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Batch</label>
                         <select value={subjectFilter} onChange={e => setSubjectFilter(e.target.value)}
-                            className={selectCls}>
-                            <option value="">— All Subjects —</option>
+                            className={`${selectCls} w-full`}>
+                            <option value="">— All Batches —</option>
                             {subjectNames.map(n => <option key={n} value={n}>{n}</option>)}
                         </select>
                     </div>
 
-                    {/* 3. Threshold dropdown — only when subject selected */}
-                    {subjectMode && (
-                        <div className="flex flex-col gap-1">
-                            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Show below</label>
-                            <select value={threshold} onChange={e => setThreshold(e.target.value)}
-                                className={selectCls}>
-                                <option value="75">75% — Needs Attention</option>
-                                <option value="60">60% — Critical</option>
-                                <option value="50">50% — Very Low</option>
-                            </select>
-                        </div>
-                    )}
+                    {/* 3. Threshold dropdown */}
+                    <div className="flex flex-col gap-1 w-full sm:w-auto">
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Show below</label>
+                        <select value={threshold} onChange={e => { setThreshold(e.target.value); setPage(1); }}
+                            className={`${selectCls} w-full`}>
+                            <option value="all">All Students</option>
+                            <option value="90">90% — Below 90%</option>
+                            <option value="85">85% — Below 85%</option>
+                            <option value="80">80% — Below 80%</option>
+                            <option value="75">75% — Below 75%</option>
+                            <option value="60">60% — Below 60%</option>
+                            <option value="50">50% — Below 50%</option>
+                        </select>
+                    </div>
 
                     {/* 4. Text search */}
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 w-full sm:w-auto">
                         <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Search</label>
                         <input type="text" placeholder="Name / Roll No…" value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 w-44" />
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 w-full sm:w-44" />
                     </div>
 
                     {/* 5. Result count + Download */}
-                    <div className="flex items-center gap-3 ml-auto">
+                    <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
                         <button onClick={handleDownload}
-                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-all">
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all">
                             <Download size={15} /> Download CSV
                         </button>
                     </div>
@@ -201,7 +233,7 @@ export default function AdminStudents() {
                         value={stats.total}
                         icon={Users}
                         color="indigo"
-                        sub={subjectMode ? `For ${subjectFilter}` : (selected === 'all' ? "All Sections" : `Section ${selected}`)}
+                        sub={subjectMode ? `For ${subjectFilter}` : (selected === 'all' ? "All Years" : `Year ${selected}`)}
                     />
                     <StatCard
                         label="Critical (<60%)"
@@ -242,15 +274,12 @@ export default function AdminStudents() {
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">#</th>
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Roll No</th>
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Name</th>
-                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Section</th>
                                         <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Overall %</th>
                                         {subjectMode && (
                                             <th className="text-left px-4 py-3 text-xs font-semibold text-rose-500 uppercase">
                                                 {subjectFilter} %
                                             </th>
                                         )}
-                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Training</th>
-                                        <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Counseling</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -261,7 +290,6 @@ export default function AdminStudents() {
                                                 <td className="px-4 py-3 text-slate-400 text-xs">{i + 1}</td>
                                                 <td className="px-4 py-3 font-mono font-medium text-indigo-600 dark:text-indigo-400 text-xs">{st.rollNo}</td>
                                                 <td className="px-4 py-3 text-slate-700 dark:text-slate-200 font-medium">{st.name}</td>
-                                                <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs">{st.section}</td>
                                                 <td className="px-4 py-3"><AttBadge pct={st.totalPercentage} /></td>
                                                 {subjectMode && (
                                                     <td className="px-4 py-3">
@@ -275,8 +303,6 @@ export default function AdminStudents() {
                                                         )}
                                                     </td>
                                                 )}
-                                                <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 max-w-[100px] truncate">{st.training || '-'}</td>
-                                                <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{st.counseling || '-'}</td>
                                             </tr>
                                         );
                                     })}
@@ -301,8 +327,8 @@ export default function AdminStudents() {
                             <div className="py-12 text-center text-slate-400">
                                 <Users size={40} className="mx-auto mb-2 opacity-30" />
                                 {subjectMode
-                                    ? `No students found with ${subjectFilter} below ${threshold}%`
-                                    : 'No students found'}
+                                    ? `No students found with ${subjectFilter} ${threshold === 'all' ? 'enrolled' : `below ${threshold}%`}`
+                                    : `No students found ${threshold !== 'all' ? `with overall attendance below ${threshold}%` : ''}`}
                             </div>
                         )}
                     </>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, UserCheck, UserX, TrendingUp, Calendar, GraduationCap, Trash2 } from 'lucide-react';
+import { Users, UserCheck, UserX, TrendingUp, Calendar, GraduationCap, Trash2, Award } from 'lucide-react';
 import ReactApexChart from 'react-apexcharts';
 import StatCard from '../../components/StatCard';
 import { getAdminStats, getSubjectStats, getDayWiseStats, getUploads, deleteUpload } from '../../api';
@@ -226,17 +226,17 @@ export default function AdminDashboard() {
                 <StatCard label="Present (≥75%)" value={present} icon={UserCheck} color="green" sub="Regular attendance" />
 
                 <button
-                    id="needs-attention-card"
-                    onClick={() => navigate('/admin/needs-attention')}
-                    className="text-left group transition-transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-rose-400 rounded-2xl"
-                    title="Click to view all students below 75%"
+                    id="assessments-card"
+                    onClick={() => navigate('/admin/assessments')}
+                    className="text-left group transition-transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-2xl"
+                    title="Click to manage student assessments and marks"
                 >
                     <StatCard
-                        label="Needs Attention"
-                        value={absent}
-                        icon={UserX}
-                        color="red"
-                        sub={<span className="text-rose-400 group-hover:underline">Click to view list ↗</span>}
+                        label="Student Assessments"
+                        value="Marks"
+                        icon={Award}
+                        color="purple"
+                        sub={<span className="text-purple-600 dark:text-purple-400 group-hover:underline">Manage & Upload ↗</span>}
                     />
                 </button>
 
@@ -363,7 +363,7 @@ export default function AdminDashboard() {
             {/* Charts Row 2 */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Section-wise Attendance %</h2>
+                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Year-wise Attendance %</h2>
                     {sectionLabels.length > 0 ? (
                         <ReactApexChart options={barOptions} series={[{ name: 'Attendance %', data: sectionData }]} type="bar" height={240} />
                     ) : (
@@ -372,7 +372,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Subject-wise Avg Attendance %</h2>
+                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Batch-wise Avg Attendance %</h2>
                     {subjectNames.length > 0 ? (
                         <ReactApexChart options={hbarOptions} series={[{ name: 'Avg %', data: subjectPercentages }]} type="bar" height={240} />
                     ) : (
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
                                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase">
                                     <th className="text-left px-4 py-2.5">Filename</th>
                                     <th className="text-left px-4 py-2.5">Upload Date</th>
-                                    <th className="text-left px-4 py-2.5">Section</th>
+                                    <th className="text-left px-4 py-2.5">Year</th>
                                     <th className="text-left px-4 py-2.5">Records</th>
                                     <th className="text-center px-4 py-2.5">Action</th>
                                 </tr>

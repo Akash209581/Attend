@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ReactApexChart from 'react-apexcharts';
-import { getStudentProfile, getStudentSubjects, getStudentHistory } from '../../api';
+import { getStudentProfile, getStudentSubjects, getStudentHistory, getStudentAssessments } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import {
@@ -461,6 +461,7 @@ export default function StudentDashboard() {
     const [profile, setProfile] = useState(null);
     const [subjects, setSubjects] = useState([]);
     const [history, setHistory] = useState([]);
+    const [assessments, setAssessments] = useState([]);
     const [tab, setTab] = useState('day');
     const [historyView, setHistoryView] = useState('all'); // 'all' | 'week' | 'month' | 'module'
     const [startDate, setStartDate] = useState('');
@@ -472,11 +473,12 @@ export default function StudentDashboard() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        Promise.all([getStudentProfile(), getStudentSubjects(), getStudentHistory()])
-            .then(([{ data: p }, { data: s }, { data: h }]) => {
+        Promise.all([getStudentProfile(), getStudentSubjects(), getStudentHistory(), getStudentAssessments()])
+            .then(([{ data: p }, { data: s }, { data: h }, { data: a }]) => {
                 setProfile(p);
                 setSubjects(s);
                 setHistory(h);
+                setAssessments(a);
 
                 // Initialize default date range (latest 5 records)
                 const crtRecords = h
@@ -625,8 +627,33 @@ export default function StudentDashboard() {
         tooltip: { theme: isDark ? 'dark' : 'light' },
     };
 
-    // wormOptions removed — using custom SVG WormChart component instead
+    // Assessments Chart Configs
+    const assessmentLabels = assessments.map(a => `${a.subject} - ${a.assessmentName}`);
+    const assessmentScores = assessments.map(a => Math.round(a.marks < 0 ? 0 : a.percentage || 0));
 
+    const assessmentChartOpts = {
+        chart: { type: 'area', height: 250, background: 'transparent', toolbar: { show: false }, zoom: { enabled: false }, animations: { speed: 800 } },
+        stroke: { curve: 'smooth', width: 3 },
+        fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.02 } },
+        colors: ['#a855f7'],
+        markers: { size: 6, strokeWidth: 2, strokeColors: '#fff', fillColors: ['#a855f7'] },
+        xaxis: { categories: assessmentLabels.length ? assessmentLabels : ['No data'], labels: { style: { colors: axisColor, fontSize: '11px' }, rotate: -35 } },
+        yaxis: { min: 0, max: 100, labels: { style: { colors: axisColor }, formatter: v => v + '%' } },
+        grid: { borderColor: gridColor },
+        dataLabels: { enabled: assessmentLabels.length <= 12, formatter: v => v + '%', style: { fontSize: '11px' }, background: { enabled: true, padding: 4, borderRadius: 4 } },
+        tooltip: { theme: dark ? 'dark' : 'light', y: { formatter: v => v + '%' } },
+        responsive: [
+            {
+                breakpoint: 640,
+                options: {
+                    chart: { height: 200 },
+                    dataLabels: { enabled: false },
+                    markers: { size: 4 },
+                    xaxis: { labels: { rotate: -45, style: { fontSize: '9px' } } }
+                }
+            }
+        ]
+    };
 
     const is4thYear = !!(profile?.rollNo && (profile.rollNo.startsWith('22') || profile.rollNo.startsWith('23')));
 
@@ -711,6 +738,7 @@ export default function StudentDashboard() {
                         ['history', 'History', History, 'col-span-6'],
                         ['charts', 'Charts & Analysis', TrendingUp, 'col-span-6'],
                         ['table', 'Subject Table', BookOpen, 'col-span-6'],
+                        ['assessment', 'Assessments', Award, 'col-span-6'],
                         is4thYear && ['predictor', 'Attendance Predictor', Sparkles, 'col-span-12'],
                     ].filter(Boolean).map(([key, label, Icon, gridClasses]) => (
                         <button key={key} onClick={() => setTab(key)}
@@ -1006,6 +1034,68 @@ export default function StudentDashboard() {
                                     <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4">Daily Cumulative Change</h2>
                                     <ReactApexChart options={changeOpts} series={[{ name: 'Change', data: slicedChanges }]} type="bar" />
                                 </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* ── Assessments Tab ── */}
+                {tab === 'assessment' && (() => {
+                    return (
+                        <div className="space-y-4">
+                            {/* Performance chart */}
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+                                <h2 className="text-sm font-semibold text-slate-700 dark:text-white mb-4">Assessment Score Trends</h2>
+                                {assessments.length === 0 ? (
+                                    <p className="text-sm text-slate-400 text-center py-6">No assessment history found.</p>
+                                ) : (
+                                    <ReactApexChart options={assessmentChartOpts} series={[{ name: 'Score %', data: assessmentScores }]} type="area" />
+                                )}
+                            </div>
+
+                            {/* Detailed scores table */}
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                                {assessments.length === 0 ? (
+                                    <div className="py-12 text-center text-slate-400">No assessments recorded.</div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-left">
+                                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Assessment Name</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Marks</th>
+                                                    <th className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Percentage</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                                                {assessments.map((a, i) => {
+                                                    const isAbsent = a.marks < 0;
+                                                    return (
+                                                        <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                                            <td className="px-4 py-3 font-medium text-xs sm:text-sm">{a.subject}</td>
+                                                            <td className="px-4 py-3 text-xs sm:text-sm">{a.assessmentName}</td>
+                                                            <td className="px-4 py-3 text-xs sm:text-sm font-semibold">
+                                                                {isAbsent ? (
+                                                                    <span className="text-rose-600 dark:text-rose-400 font-bold">Absent</span>
+                                                                ) : (
+                                                                    `${a.marks} / ${a.maxMarks}`
+                                                                )}
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                {isAbsent ? (
+                                                                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">Absent</span>
+                                                                ) : (
+                                                                    <AttBadge pct={a.percentage} />
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );

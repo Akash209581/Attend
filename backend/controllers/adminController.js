@@ -22,6 +22,19 @@ const parseSubjectValue = (val) => {
 // Keys to skip when parsing subjects
 const SKIP_KEYS = ['SL', 'REGD.NO', 'NAME', 'TOTAL %', 'TRg', 'Counseling', 'library', 'sl', 'regd.no', 'name', 'total %', 'trg', 'counseling'];
 
+// Helper to map student database rows to camelCase for the frontend
+const mapStudentRow = (s) => ({
+    id: s.id,
+    _id: s.id, // For key compatibility in React lists
+    rollNo: s.roll_no,
+    name: s.name,
+    section: s.section,
+    year: s.year,
+    totalPercentage: parseFloat(s.total_percentage) || 0,
+    training: s.training,
+    counseling: s.counseling
+});
+
 // ─── Parse CRT Excel buffer into records array ───────────────────────────────
 // Format: SL | RegisterNO | Name | BatchName(attended)(pct) | Total %
 // Example batch cell: "CSE - Batch - 3(3)(100.00)" → attended=3, total=3, pct=100
@@ -646,15 +659,41 @@ exports.getSectionStudents = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
     const offset = (page - 1) * limit;
+    const threshold = req.query.threshold ? parseFloat(req.query.threshold) : null;
 
-    const countRes = await query('SELECT COUNT(*) as count FROM students WHERE section = $1', [section]);
+    const isAll = !section || section === 'all';
+    
+    let countSql = 'SELECT COUNT(*) as count FROM students WHERE 1=1';
+    let countParams = [];
+    
+    if (!isAll) {
+        countParams.push(section);
+        countSql += ` AND section = $${countParams.length}`;
+    }
+    if (threshold !== null) {
+        countParams.push(threshold);
+        countSql += ` AND total_percentage < $${countParams.length}`;
+    }
+
+    const countRes = await query(countSql, countParams);
     const total = parseInt(countRes.rows[0].count);
 
-    const studRes = await query(
-        `SELECT id, roll_no, name, section, year, total_percentage, training, counseling
-         FROM students WHERE section = $1 ORDER BY roll_no ASC LIMIT $2 OFFSET $3`,
-        [section, limit, offset]
-    );
+    let studSql = 'SELECT id, roll_no, name, section, year, total_percentage, training, counseling FROM students WHERE 1=1';
+    let studParams = [];
+    
+    if (!isAll) {
+        studParams.push(section);
+        studSql += ` AND section = $${studParams.length}`;
+    }
+    if (threshold !== null) {
+        studParams.push(threshold);
+        studSql += ` AND total_percentage < $${studParams.length}`;
+    }
+    
+    studSql += ` ORDER BY roll_no ASC LIMIT $${studParams.length + 1} OFFSET $${studParams.length + 2}`;
+    studParams.push(limit, offset);
+
+    const studRes = await query(studSql, studParams);
 
     // Get subjects for each student
     const students = await Promise.all(studRes.rows.map(async (s) => {
@@ -662,7 +701,7 @@ exports.getSectionStudents = async (req, res) => {
             'SELECT subject, attended, total, percentage FROM student_subjects WHERE student_id = $1',
             [s.id]
         );
-        return { ...s, subjects: subjRes.rows };
+        return { ...mapStudentRow(s), subjects: subjRes.rows };
     }));
 
     res.json({ students, total, page, pages: Math.ceil(total / limit) });
@@ -675,8 +714,14 @@ exports.searchStudent = async (req, res) => {
     const params = [];
 
     if (rollNo) {
-        params.push(`%${rollNo.toUpperCase()}%`);
-        sql += ` AND roll_no LIKE $${params.length}`;
+        const cleanRoll = rollNo.trim().toUpperCase();
+        if (cleanRoll.length === 10) {
+            params.push(cleanRoll);
+            sql += ` AND roll_no = $${params.length}`;
+        } else {
+            params.push(`%${cleanRoll}%`);
+            sql += ` AND roll_no LIKE $${params.length}`;
+        }
     }
     if (name) {
         params.push(`%${name}%`);
@@ -768,18 +813,20 @@ exports.downloadCSV = async (req, res) => {
     res.send(csv);
 };
 
-// ─── Students Needing Attention (below 75%) ───────────────────────────────────
+// ─── Students Needing Attention (below threshold) ───────────────────────────────────
 exports.getNeedsAttention = async (req, res) => {
+    const threshold = parseFloat(req.query.threshold) || 75;
     const res2 = await query(
         `SELECT id, roll_no, name, section, year, total_percentage
-         FROM students WHERE total_percentage < 75 ORDER BY total_percentage ASC`
+         FROM students WHERE total_percentage < $1 ORDER BY total_percentage ASC`,
+        [threshold]
     );
     const students = await Promise.all(res2.rows.map(async (s) => {
         const subjRes = await query(
             'SELECT subject, attended, total, percentage FROM student_subjects WHERE student_id = $1',
             [s.id]
         );
-        return { ...s, rollNo: s.roll_no, subjects: subjRes.rows };
+        return { ...mapStudentRow(s), subjects: subjRes.rows };
     }));
     res.json(students);
 };
@@ -828,7 +875,7 @@ exports.getStudentsBySubject = async (req, res) => {
             map[row.roll_no] = {
                 id: row.id, rollNo: row.roll_no, name: row.name,
                 section: row.section, year: row.year,
-                totalPercentage: row.total_percentage, subjects: []
+                totalPercentage: parseFloat(row.total_percentage) || 0, subjects: []
             };
         }
         if (row.subject) {
@@ -857,7 +904,9 @@ exports.getYearStudents = async (req, res) => {
         [parseInt(year), limit, offset]
     );
 
-    res.json({ students: studRes.rows, total, page, pages: Math.ceil(total / limit) });
+    const students = studRes.rows.map(mapStudentRow);
+
+    res.json({ students, total, page, pages: Math.ceil(total / limit) });
 };
 
 // ─── Delete Upload ─────────────────────────────────────────────────────────────
@@ -1016,6 +1065,15 @@ exports.getStudentDetail = async (req, res) => {
         }));
     }
 
+    // 4. Fetch Student Assessments
+    const assessmentsQuery = await query(
+        `SELECT id, subject, assessment_name, marks, max_marks, percentage, upload_date
+         FROM student_assessments
+         WHERE roll_no = $1
+         ORDER BY upload_date ASC, id ASC`,
+        [cleanRollNo]
+    );
+
     res.json({
         profile: {
             id: student.id,
@@ -1034,7 +1092,16 @@ exports.getStudentDetail = async (req, res) => {
             total: r.total,
             percentage: parseFloat(r.percentage) || 0
         })),
-        history
+        history,
+        assessments: assessmentsQuery.rows.map(r => ({
+            id: r.id,
+            subject: r.subject,
+            assessmentName: r.assessment_name,
+            marks: parseFloat(r.marks),
+            maxMarks: parseFloat(r.max_marks),
+            percentage: parseFloat(r.percentage),
+            uploadDate: r.upload_date
+        }))
     });
 };
 

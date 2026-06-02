@@ -72,7 +72,7 @@ export default function SectionView() {
             {selected && (
                 <>
                     {/* Header */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2 bg-white dark:bg-slate-900 rounded-xl px-4 py-2 border border-slate-200 dark:border-slate-800">
                                 <Users size={16} className="text-indigo-500" />
@@ -89,7 +89,7 @@ export default function SectionView() {
                         </div>
                         <button
                             onClick={handleDownload}
-                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition-all"
+                            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2.5 rounded-xl transition-all"
                         >
                             <Download size={15} /> Download CSV
                         </button>
@@ -104,15 +104,15 @@ export default function SectionView() {
                         ) : (
                             <>
                                 <div className="overflow-x-auto">
-                                    <table className="w-full text-sm">
+                                    <table className="w-full text-sm min-w-[500px]">
                                         <thead>
                                             <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">#</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Roll No</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Name</th>
-                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Section</th>
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Year</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total %</th>
-                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Subjects</th>
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Batches</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -123,7 +123,7 @@ export default function SectionView() {
                                                     <td className="px-4 py-3 text-slate-700 dark:text-slate-200 font-medium">{st.name}</td>
                                                     <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{st.section}</td>
                                                     <td className="px-4 py-3"><AttBadge pct={st.totalPercentage} /></td>
-                                                    <td className="px-4 py-3 text-slate-400 text-xs">{(st.subjects || []).length} subjects</td>
+                                                    <td className="px-4 py-3 text-slate-400 text-xs">{(st.subjects || []).length} batches</td>
                                                 </tr>
                                             ))}
                                         </tbody>

@@ -11,7 +11,6 @@ const {
     getUploads,
     getSubjectStats,
     downloadCSV,
-    getNeedsAttention,
     getSubjectNames,
     getStudentsBySubject,
     getDayWiseStats,
@@ -19,6 +18,12 @@ const {
     deleteUpload,
     getStudentDetail,
 } = require('../controllers/adminController');
+
+const {
+    uploadAssessments,
+    getAssessments,
+    deleteAssessmentUpload
+} = require('../controllers/assessmentController');
 
 // Multer in-memory storage for Excel files
 const upload = multer({
@@ -71,7 +76,9 @@ router.get('/students-by-subject', getStudentsBySubject);
 // Download
 router.get('/download/:section', downloadCSV);
 
-// Needs attention
-router.get('/needs-attention', getNeedsAttention);
+// Assessments
+router.post('/assessments/upload', upload.single('file'), uploadAssessments);
+router.get('/assessments', getAssessments);
+router.delete('/assessments/uploads/:id', deleteAssessmentUpload);
 
 module.exports = router;

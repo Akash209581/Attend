@@ -13,7 +13,7 @@ import AdminUpload from './pages/admin/Upload';
 import AdminSectionView from './pages/admin/SectionView';
 import AdminSearch from './pages/admin/Search';
 import AdminStudents from './pages/admin/Students';
-import NeedsAttentionPage from './pages/admin/NeedsAttention';
+import AdminAssessments from './pages/admin/Assessments';
 import StudentDashboard from './pages/student/Dashboard';
 
 const ProtectedAdmin = ({ children }) => {
@@ -55,7 +55,7 @@ function AppRoutes() {
           <Route path="sections" element={<AdminSectionView />} />
           <Route path="search" element={<AdminSearch />} />
           <Route path="students" element={<AdminStudents />} />
-          <Route path="needs-attention" element={<NeedsAttentionPage />} />
+          <Route path="assessments" element={<AdminAssessments />} />
         </Route>
       </Route>
 

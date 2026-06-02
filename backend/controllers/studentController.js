@@ -116,3 +116,24 @@ exports.getSectionMates = async (req, res) => {
         totalPercentage: parseFloat(r.total_percentage) || 0,
     })));
 };
+
+// ─── Get Student Assessments ──────────────────────────────────────────────────
+exports.getStudentAssessments = async (req, res) => {
+    const result = await query(
+        `SELECT id, subject, assessment_name, marks, max_marks, percentage, upload_date
+         FROM student_assessments
+         WHERE roll_no = $1
+         ORDER BY upload_date ASC, id ASC`,
+        [req.user.rollNo]
+    );
+
+    res.json(result.rows.map(r => ({
+        id: r.id,
+        subject: r.subject,
+        assessmentName: r.assessment_name,
+        marks: parseFloat(r.marks),
+        maxMarks: parseFloat(r.max_marks),
+        percentage: parseFloat(r.percentage),
+        uploadDate: r.upload_date
+    })));
+};

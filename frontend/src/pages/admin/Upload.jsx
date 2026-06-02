@@ -114,7 +114,7 @@ export default function AdminUpload() {
                             <GraduationCap size={14} className="inline mr-1.5" />
                             Select Year
                         </label>
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             {[
                                 { val: '3', label: '3rd Year', desc: 'CRT Day wise.xlsx' },
                                 { val: '4', label: '4th Year', desc: '4year.xlsx' },
@@ -253,7 +253,7 @@ export default function AdminUpload() {
                                 <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-semibold text-xs uppercase">
                                     <th className="text-left px-4 py-2.5">Filename</th>
                                     <th className="text-left px-4 py-2.5">Upload Date</th>
-                                    <th className="text-left px-4 py-2.5">Section</th>
+                                    <th className="text-left px-4 py-2.5">Year</th>
                                     <th className="text-left px-4 py-2.5">Records</th>
                                     <th className="text-center px-4 py-2.5">Action</th>
                                 </tr>
