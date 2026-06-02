@@ -4,6 +4,7 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const { query, pool } = require('../db');
 const bcrypt = require('bcryptjs');
+const initDb = require('../initDb');
 
 async function main() {
     const args = process.argv.slice(2);
@@ -22,6 +23,9 @@ async function main() {
     }
 
     try {
+        // Ensure tables are created first
+        await initDb();
+
         // Check if username exists
         const check = await query('SELECT id FROM admins WHERE username = $1', [username]);
         if (check.rows.length > 0) {
