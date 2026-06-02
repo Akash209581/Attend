@@ -8,7 +8,7 @@ import cseLogo from '../assets/logo.png';
 const links = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/admin/upload', icon: Upload, label: 'Upload Attendance' },
-    { to: '/admin/sections', icon: BookOpen, label: 'Year View' },
+    { to: '/admin/sections', icon: BookOpen, label: 'Section View' },
     { to: '/admin/students', icon: Users, label: 'All Students' },
     { to: '/admin/assessments', icon: Award, label: 'Assessments' },
     { to: '/admin/search', icon: Search, label: 'Search Student' },

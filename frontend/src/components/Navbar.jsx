@@ -6,7 +6,7 @@ import { useLocation } from 'react-router-dom';
 const titleMap = {
     '/admin/dashboard': 'Dashboard',
     '/admin/upload': 'Upload Attendance',
-    '/admin/sections': 'Year View',
+    '/admin/sections': 'Section View',
     '/admin/students': 'All Students',
     '/admin/assessments': 'Assessments',
     '/admin/search': 'Search Student',
