@@ -2,15 +2,19 @@ const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const xlsx = require('c:/Users/banda/Desktop/attend/backend/node_modules/xlsx');
+const xlsx = require('xlsx');
 const { query, pool } = require('../db');
+const fs = require('fs');
 
 async function prune() {
     try {
         console.log('=== Student Database Pruning Script ===');
 
         // 1. Read Excel Sheet
-        const excelPath = 'c:/Users/banda/Desktop/attend/asses.xlsx';
+        let excelPath = path.join(__dirname, '../../asses.xlsx');
+        if (!fs.existsSync(excelPath)) {
+            excelPath = 'c:/Users/banda/Desktop/attend/asses.xlsx';
+        }
         console.log(`Reading Excel file: ${excelPath}`);
         const workbook = xlsx.readFile(excelPath);
         const sheetName = workbook.SheetNames[0];
