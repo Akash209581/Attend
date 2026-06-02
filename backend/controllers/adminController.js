@@ -220,11 +220,12 @@ const bulkUpsertStudents = async (client, records, hashMap, section, yearNum) =>
                 updated++;
             }
             
+            const is3rd = roll.toUpperCase().trim().startsWith('241FA');
             return {
                 roll_no: roll,
                 name: record.name,
-                section: section || 'CRT',
-                year: yearNum,
+                section: is3rd ? 'CRT-3RD' : 'CRT-4TH',
+                year: is3rd ? 3 : 4,
                 password_hash: hash,
                 total_percentage: record.totalPercentage || 0,
                 training: record.training || '-',
@@ -248,7 +249,7 @@ const bulkUpsertStudents = async (client, records, hashMap, section, yearNum) =>
             VALUES ${placeholders.join(', ')}
             ON CONFLICT (roll_no) DO UPDATE SET
                 name = CASE WHEN EXCLUDED.name <> '' THEN EXCLUDED.name ELSE students.name END,
-                section = CASE WHEN EXCLUDED.section <> '' THEN EXCLUDED.section ELSE students.section END,
+                section = EXCLUDED.section,
                 year = EXCLUDED.year,
                 total_percentage = EXCLUDED.total_percentage,
                 training = EXCLUDED.training,
@@ -319,17 +320,21 @@ const bulkUpsertAttendance = async (client, records, section, yearNum, dateStr, 
     for (let i = 0; i < records.length; i += chunkSize) {
         const chunk = records.slice(i, i + chunkSize);
         
-        const rows = chunk.map(record => ({
-            roll_no: record.rollNo,
-            name: record.name,
-            section: section || 'CRT',
-            year: yearNum,
-            upload_date: dateStr,
-            total_percentage: record.totalPercentage || 0,
-            training: record.training || '-',
-            counseling: record.counseling || '-',
-            upload_batch_id: uploadId
-        }));
+        const rows = chunk.map(record => {
+            const roll = record.rollNo;
+            const is3rd = roll.toUpperCase().trim().startsWith('241FA');
+            return {
+                roll_no: roll,
+                name: record.name,
+                section: is3rd ? 'CRT-3RD' : 'CRT-4TH',
+                year: is3rd ? 3 : 4,
+                upload_date: dateStr,
+                total_percentage: record.totalPercentage || 0,
+                training: record.training || '-',
+                counseling: record.counseling || '-',
+                upload_batch_id: uploadId
+            };
+        });
 
         const columns = ['roll_no', 'name', 'section', 'year', 'upload_date', 'total_percentage', 'training', 'counseling', 'upload_batch_id'];
         

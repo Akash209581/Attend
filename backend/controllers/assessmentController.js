@@ -160,12 +160,13 @@ const bulkUpsertAssessmentStudents = async (client, uniqueStudents, hashMap) => 
         const rows = chunk.map(record => {
             const roll = record.rollNo;
             const hash = hashMap[roll.toUpperCase().trim()] || '';
+            const is3rd = roll.toUpperCase().trim().startsWith('241FA');
             
             return {
                 roll_no: roll,
                 name: roll, // default to roll number
-                section: record.section || '1',
-                year: 4,
+                section: is3rd ? 'CRT-3RD' : 'CRT-4TH',
+                year: is3rd ? 3 : 4,
                 password_hash: hash,
                 total_percentage: 0,
                 training: '-',
@@ -188,7 +189,8 @@ const bulkUpsertAssessmentStudents = async (client, uniqueStudents, hashMap) => 
             INSERT INTO students (roll_no, name, section, year, password_hash, total_percentage, training, counseling)
             VALUES ${placeholders.join(', ')}
             ON CONFLICT (roll_no) DO UPDATE SET
-                section = CASE WHEN EXCLUDED.section <> '1' THEN EXCLUDED.section ELSE students.section END,
+                section = EXCLUDED.section,
+                year = EXCLUDED.year,
                 updated_at = NOW()
             RETURNING roll_no, id
         `;
