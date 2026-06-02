@@ -22,8 +22,9 @@ export default function SectionView() {
 
     useEffect(() => {
         getAdminSections().then(({ data }) => {
-            setSections(data);
-            if (data.length) setSelected(data[0]);
+            const sortedData = [...data].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            setSections(sortedData);
+            if (sortedData.length) setSelected(sortedData[0]);
         });
     }, []);
 
@@ -110,7 +111,7 @@ export default function SectionView() {
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">#</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Roll No</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Name</th>
-                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Year</th>
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Section</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Total %</th>
                                                 <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Batches</th>
                                             </tr>

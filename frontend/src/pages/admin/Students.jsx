@@ -40,8 +40,9 @@ export default function AdminStudents() {
     /* ── Load sections + subject names ── */
     useEffect(() => {
         getAdminSections().then(({ data }) => {
-            setSections(data);
-            if (data.length) setSelected(data[0]);
+            const sortedData = [...data].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            setSections(sortedData);
+            if (sortedData.length) setSelected(sortedData[0]);
         });
         getSubjectNames().then(({ data }) => setSubjectNames(data));
     }, []);
@@ -172,12 +173,12 @@ export default function AdminStudents() {
 
                 <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3">
 
-                    {/* 1. Year dropdown */}
+                    {/* 1. Section dropdown */}
                     <div className="flex flex-col gap-1 w-full sm:w-auto">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Year</label>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Section</label>
                         <select value={selected} onChange={e => { setSelected(e.target.value); setPage(1); }}
                             className={`${selectCls} w-full`}>
-                            <option value="all">All Years</option>
+                            <option value="all">All Sections</option>
                             {sections.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
@@ -233,7 +234,7 @@ export default function AdminStudents() {
                         value={stats.total}
                         icon={Users}
                         color="indigo"
-                        sub={subjectMode ? `For ${subjectFilter}` : (selected === 'all' ? "All Years" : `Year ${selected}`)}
+                        sub={subjectMode ? `For ${subjectFilter}` : (selected === 'all' ? "All Sections" : `Section ${selected}`)}
                     />
                     <StatCard
                         label="Critical (<60%)"
