@@ -11,9 +11,14 @@ async function prune() {
         console.log('=== Student Database Pruning Script ===');
 
         // 1. Read Excel Sheet
-        let excelPath = path.join(__dirname, '../../asses.xlsx');
-        if (!fs.existsSync(excelPath)) {
-            excelPath = 'c:/Users/banda/Desktop/attend/asses.xlsx';
+        let excelPath = process.argv[2];
+        if (excelPath) {
+            excelPath = path.resolve(excelPath);
+        } else {
+            excelPath = path.join(__dirname, '../../asses.xlsx');
+            if (!fs.existsSync(excelPath)) {
+                excelPath = 'c:/Users/banda/Desktop/attend/asses.xlsx';
+            }
         }
         console.log(`Reading Excel file: ${excelPath}`);
         const workbook = xlsx.readFile(excelPath);
