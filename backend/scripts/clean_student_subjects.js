@@ -1,7 +1,8 @@
-const { query, pool } = require('../db');
 const path = require('path');
 const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, '../.env') });
+
+const { query, pool } = require('../db');
 
 const getBatchNumber = (str) => {
     const match = str.match(/\d+/);
