@@ -217,16 +217,47 @@ const provisionStudentSubjects = async (client, studentRollToId, uniqueStudents)
         existsRes.rows.map(r => `${r.student_id}::${String(r.subject).trim().toLowerCase()}`)
     );
 
+    // Group existing subjects by student_id
+    const existingSubjectsMap = {};
+    for (const r of existsRes.rows) {
+        const sid = r.student_id;
+        if (!existingSubjectsMap[sid]) {
+            existingSubjectsMap[sid] = [];
+        }
+        existingSubjectsMap[sid].push(String(r.subject).trim().toLowerCase());
+    }
+
+    const getBatchNumber = (str) => {
+        const match = str.match(/\d+/);
+        return match ? match[0] : null;
+    };
+
     const toInsert = [];
     for (const student of uniqueStudents) {
         const studentId = studentRollToId[student.rollNo.toUpperCase().trim()];
         if (!studentId || !student.batch) continue;
 
-        const key = `${studentId}::${student.batch.trim().toLowerCase()}`;
-        if (!existingSet.has(key)) {
-            toInsert.push({ studentId, batch: student.batch.trim() });
-            existingSet.add(key); // prevent duplicates in the same upload
+        const newBatchClean = student.batch.trim().toLowerCase();
+        const key = `${studentId}::${newBatchClean}`;
+        if (existingSet.has(key)) continue;
+
+        // If new batch is a short form like B9, check if they already have a long batch name like CSE - Batch - 9
+        if (/^[Bb]\d+$/.test(student.batch.trim())) {
+            const newNum = getBatchNumber(student.batch);
+            const studentExisting = existingSubjectsMap[studentId] || [];
+            const hasMatchingLong = studentExisting.some(exSub => getBatchNumber(exSub) === newNum);
+            if (hasMatchingLong) {
+                // Already has a matching long batch like "CSE - Batch - 9", so skip B9
+                continue;
+            }
         }
+
+        toInsert.push({ studentId, batch: student.batch.trim() });
+        existingSet.add(key); // prevent duplicates in the same upload
+        if (!existingSubjectsMap[studentId]) {
+            existingSubjectsMap[studentId] = [];
+        }
+        existingSubjectsMap[studentId].push(newBatchClean);
     }
 
     if (toInsert.length === 0) return;
