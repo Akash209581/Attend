@@ -15,8 +15,12 @@ const links = [
 ];
 
 export default function Sidebar({ isOpen, setIsOpen }) {
-    const { logout } = useAuth();
+    const { logout, user } = useAuth();
     const navigate = useNavigate();
+
+    const filteredLinks = links.filter(
+        link => !(user?.adminRole === 'restricted_admin' && link.to === '/admin/upload')
+    );
 
     const handleLogout = () => {
         logout();
@@ -51,7 +55,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
 
                 {/* Nav */}
                 <nav className="flex-1 px-3 py-4 space-y-1">
-                    {links.map(({ to, icon: Icon, label }) => (
+                    {filteredLinks.map(({ to, icon: Icon, label }) => (
                         <NavLink
                             key={to}
                             to={to}

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Upload as UploadIcon, CheckCircle, AlertCircle, FileSpreadsheet, Calendar, GraduationCap, Trash2, Search, Filter, Award, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { uploadAssessments, getAssessments, deleteAssessmentUpload, getUploads } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 
 const todayStr = () => {
     const d = new Date();
@@ -9,6 +10,9 @@ const todayStr = () => {
 };
 
 export default function AdminAssessments() {
+    const { user } = useAuth();
+    const isRestricted = user?.adminRole === 'restricted_admin';
+
     /* ── Upload State ── */
     const [file, setFile] = useState(null);
     const [uploadDate, setUploadDate] = useState(todayStr());
@@ -66,8 +70,10 @@ export default function AdminAssessments() {
     };
 
     useEffect(() => {
-        fetchHistory();
-    }, []);
+        if (!isRestricted) {
+            fetchHistory();
+        }
+    }, [isRestricted]);
 
     useEffect(() => {
         fetchAssessments();
@@ -142,10 +148,11 @@ export default function AdminAssessments() {
     const selectCls = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer";
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className={isRestricted ? "grid grid-cols-1 gap-6" : "grid grid-cols-1 lg:grid-cols-3 gap-6"}>
             
             {/* Left: Upload Form & History (1 Col) */}
-            <div className="lg:col-span-1 space-y-6">
+            {!isRestricted && (
+                <div className="lg:col-span-1 space-y-6">
                 
                 {/* Upload Form Card */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
@@ -286,10 +293,11 @@ export default function AdminAssessments() {
                     )}
                 </div>
 
-            </div>
+                </div>
+            )}
 
             {/* Right: Scores List & Filters (2 Cols) */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className={isRestricted ? "lg:col-span-3 space-y-6" : "lg:col-span-2 space-y-6"}>
                 
                 {/* Filters card */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm">

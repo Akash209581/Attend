@@ -18,7 +18,7 @@ export default function AdminLogin() {
         setLoading(true);
         try {
             const { data } = await adminLogin(form);
-            login({ role: 'admin', username: data.username }, data.token);
+            login({ role: 'admin', username: data.username, adminRole: data.adminRole }, data.token);
             toast.success('Welcome back, Admin!');
             navigate('/admin/dashboard');
         } catch (err) {

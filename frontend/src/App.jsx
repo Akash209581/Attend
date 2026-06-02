@@ -51,7 +51,7 @@ function AppRoutes() {
         <Route index element={<AdminEntry />} />
         <Route element={<ProtectedAdmin><AdminLayout /></ProtectedAdmin>}>
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="upload" element={<AdminUpload />} />
+          <Route path="upload" element={user?.adminRole === 'restricted_admin' ? <Navigate to="/admin/dashboard" replace /> : <AdminUpload />} />
           <Route path="sections" element={<AdminSectionView />} />
           <Route path="search" element={<AdminSearch />} />
           <Route path="students" element={<AdminStudents />} />

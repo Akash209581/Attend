@@ -32,4 +32,13 @@ const adminOnly = (req, res, next) => {
     });
 };
 
-module.exports = { adminAuth, studentAuth, adminOnly };
+const superAdminOnly = (req, res, next) => {
+    adminOnly(req, res, () => {
+        if (req.user.adminRole !== 'super_admin') {
+            return res.status(403).json({ message: 'Access denied: action restricted to super admins only' });
+        }
+        next();
+    });
+};
+
+module.exports = { adminAuth, studentAuth, adminOnly, superAdminOnly };

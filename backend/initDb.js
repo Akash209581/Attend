@@ -89,6 +89,16 @@ async function initDb() {
         );
     `);
 
+    await query(`
+        CREATE TABLE IF NOT EXISTS admins (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(100) UNIQUE NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            role VARCHAR(50) DEFAULT 'super_admin',
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+    `);
+
     // Indexes for performance
     await query(`CREATE INDEX IF NOT EXISTS idx_students_roll_no ON students(roll_no);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_students_year ON students(year);`);
@@ -97,6 +107,20 @@ async function initDb() {
     await query(`CREATE INDEX IF NOT EXISTS idx_attendance_year ON attendance_records(year);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_assessments_roll ON student_assessments(roll_no);`);
     await query(`CREATE INDEX IF NOT EXISTS idx_assessments_subject ON student_assessments(subject);`);
+
+    // Auto-seed default admin if table is empty
+    const adminCheck = await query('SELECT COUNT(*) FROM admins');
+    if (parseInt(adminCheck.rows[0].count, 10) === 0) {
+        const bcrypt = require('bcryptjs');
+        const defaultUser = process.env.ADMIN_USERNAME || 'admin';
+        const defaultPass = process.env.ADMIN_PASSWORD || 'Naidu@akash867';
+        const hash = await bcrypt.hash(defaultPass, 8);
+        await query(
+            'INSERT INTO admins (username, password_hash, role) VALUES ($1, $2, $3)',
+            [defaultUser, hash, 'super_admin']
+        );
+        console.log(`👤 Seeded default admin: ${defaultUser}`);
+    }
 
     console.log('✅ Database schema initialized');
 }

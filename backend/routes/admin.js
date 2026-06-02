@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { adminOnly } = require('../middleware/auth');
+const { adminOnly, superAdminOnly } = require('../middleware/auth');
 const {
     uploadAttendance,
     getStats,
@@ -45,7 +45,7 @@ const upload = multer({
 router.use(adminOnly);
 
 // Upload
-router.post('/upload', upload.single('file'), uploadAttendance);
+router.post('/upload', superAdminOnly, upload.single('file'), uploadAttendance);
 
 // Stats & charts
 router.get('/stats', getStats);
@@ -66,7 +66,7 @@ router.get('/students/detail/:rollNo', getStudentDetail);
 
 // Uploads history
 router.get('/uploads', getUploads);
-router.delete('/uploads/:id', deleteUpload);
+router.delete('/uploads/:id', superAdminOnly, deleteUpload);
 
 // Subject analytics
 router.get('/subject-stats', getSubjectStats);
@@ -77,8 +77,8 @@ router.get('/students-by-subject', getStudentsBySubject);
 router.get('/download/:section', downloadCSV);
 
 // Assessments
-router.post('/assessments/upload', upload.single('file'), uploadAssessments);
+router.post('/assessments/upload', superAdminOnly, upload.single('file'), uploadAssessments);
 router.get('/assessments', getAssessments);
-router.delete('/assessments/uploads/:id', deleteAssessmentUpload);
+router.delete('/assessments/uploads/:id', superAdminOnly, deleteAssessmentUpload);
 
 module.exports = router;

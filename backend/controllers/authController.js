@@ -8,14 +8,28 @@ const generateToken = (payload, expiresIn = '7d') =>
 // ─── Admin Login ───────────────────────────────────────────────────────────────
 exports.adminLogin = async (req, res) => {
     const { username, password } = req.body;
-    if (
-        username !== process.env.ADMIN_USERNAME ||
-        password !== process.env.ADMIN_PASSWORD
-    ) {
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
+    }
+
+    const cleanUsername = username.trim();
+    const result = await query(
+        'SELECT id, username, password_hash, role FROM admins WHERE username = $1',
+        [cleanUsername]
+    );
+
+    if (result.rows.length === 0) {
         return res.status(401).json({ message: 'Invalid admin credentials' });
     }
-    const token = generateToken({ role: 'admin', username });
-    res.json({ token, role: 'admin', username });
+
+    const admin = result.rows[0];
+    const match = await bcrypt.compare(password, admin.password_hash);
+    if (!match) {
+        return res.status(401).json({ message: 'Invalid admin credentials' });
+    }
+
+    const token = generateToken({ role: 'admin', adminRole: admin.role, username: admin.username, id: admin.id });
+    res.json({ token, role: 'admin', adminRole: admin.role, username: admin.username });
 };
 
 // ─── Student Login ─────────────────────────────────────────────────────────────
