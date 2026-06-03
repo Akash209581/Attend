@@ -7,7 +7,7 @@ import { useTheme } from '../../context/ThemeContext';
 import {
     Sun, Moon, LogOut, BookOpen,
     History, Award, TrendingUp, CheckCircle, AlertTriangle,
-    CalendarDays, Calendar, LayoutGrid, Sparkles
+    CalendarDays, Calendar, LayoutGrid, Sparkles, BarChart3
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import cseLogo from '../../assets/logo.png';
@@ -655,6 +655,80 @@ export default function StudentDashboard() {
         ]
     };
 
+    // Category overall performance calculations
+    const getCategory = (subjectStr) => {
+        const s = String(subjectStr || '').toLowerCase().trim();
+        if (s.includes('non') || s.includes('non-technical') || s.includes('non technical')) {
+            return 'Non-Technical';
+        }
+        if (s.includes('grand') || s.includes('gt') || s.includes('grand test')) {
+            return 'Grand Test';
+        }
+        return 'Technical';
+    };
+
+    const categoryTotals = {
+        'Technical': { sum: 0, count: 0 },
+        'Non-Technical': { sum: 0, count: 0 },
+        'Grand Test': { sum: 0, count: 0 }
+    };
+
+    assessments.forEach(a => {
+        if (a.marks >= 0) {
+            const cat = getCategory(a.subject);
+            categoryTotals[cat].sum += (a.percentage || 0);
+            categoryTotals[cat].count += 1;
+        }
+    });
+
+    const categoriesData = [
+        { name: 'Technical', avg: categoryTotals['Technical'].count > 0 ? Math.round(categoryTotals['Technical'].sum / categoryTotals['Technical'].count) : 0, count: categoryTotals['Technical'].count },
+        { name: 'Non-Technical', avg: categoryTotals['Non-Technical'].count > 0 ? Math.round(categoryTotals['Non-Technical'].sum / categoryTotals['Non-Technical'].count) : 0, count: categoryTotals['Non-Technical'].count },
+        { name: 'Grand Test', avg: categoryTotals['Grand Test'].count > 0 ? Math.round(categoryTotals['Grand Test'].sum / categoryTotals['Grand Test'].count) : 0, count: categoryTotals['Grand Test'].count }
+    ];
+
+    const categoryChartSeries = [{
+        name: 'Average Score',
+        data: categoriesData.map(c => c.avg)
+    }];
+
+    const categoryChartOpts = {
+        chart: { type: 'bar', height: 250, background: 'transparent', toolbar: { show: false } },
+        plotOptions: {
+            bar: {
+                borderRadius: 5,
+                columnWidth: '45%',
+                distributed: true,
+            }
+        },
+        colors: ['#3b82f6', '#10b981', '#f59e0b'],
+        dataLabels: {
+            enabled: true,
+            formatter: (val) => `${val}%`,
+            style: { fontSize: '11px', colors: ['#fff'] }
+        },
+        xaxis: {
+            categories: categoriesData.map(c => c.name),
+            labels: { style: { colors: axisColor, fontSize: '11px' } }
+        },
+        yaxis: {
+            min: 0,
+            max: 100,
+            labels: { style: { colors: axisColor }, formatter: v => v + '%' }
+        },
+        grid: { borderColor: gridColor },
+        legend: { show: false },
+        tooltip: {
+            theme: dark ? 'dark' : 'light',
+            y: {
+                formatter: (val, opts) => {
+                    const catData = categoriesData[opts.dataPointIndex];
+                    return `${val}% (${catData.count} test${catData.count !== 1 ? 's' : ''})`;
+                }
+            }
+        }
+    };
+
     const is4thYear = !!(profile?.rollNo && (profile.rollNo.startsWith('22') || profile.rollNo.startsWith('23')));
 
     return (
@@ -798,23 +872,36 @@ export default function StudentDashboard() {
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
-                                                {['Upload Date', 'Section', 'Overall %'].map(h => (
-                                                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">{h}</th>
-                                                ))}
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Upload Date</th>
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Section</th>
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Slots Present</th>
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Slots Absent</th>
+                                                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 uppercase">Overall %</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {sorted.map(h => (
-                                                <tr key={h._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                                                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">
-                                                        {new Date(h.uploadDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
-                                                    </td>
-                                                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{h.section}</td>
-                                                    <td className="px-4 py-3">
-                                                        <AttBadge pct={Math.round(h.totalPercentage || 0)} />
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {sorted.map(h => {
+                                                const slotsPresent = (h.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
+                                                const slotsTotal = (h.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
+                                                const slotsAbsent = Math.max(0, slotsTotal - slotsPresent);
+                                                return (
+                                                    <tr key={h._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">
+                                                            {new Date(h.uploadDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{h.section}</td>
+                                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300 font-medium">
+                                                            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{slotsPresent}</span>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300 font-medium">
+                                                            <span className={slotsAbsent > 0 ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-455"}>{slotsAbsent}</span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <AttBadge pct={Math.round(h.totalPercentage || 0)} />
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1043,14 +1130,26 @@ export default function StudentDashboard() {
                 {tab === 'assessment' && (() => {
                     return (
                         <div className="space-y-4">
-                            {/* Performance chart */}
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
-                                <h2 className="text-sm font-semibold text-slate-700 dark:text-white mb-4">Assessment Score Trends</h2>
-                                {assessments.length === 0 ? (
-                                    <p className="text-sm text-slate-400 text-center py-6">No assessment history found.</p>
-                                ) : (
-                                    <ReactApexChart options={assessmentChartOpts} series={[{ name: 'Score %', data: assessmentScores }]} type="area" />
-                                )}
+                            {/* Performance charts */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+                                    <h2 className="text-sm font-semibold text-slate-700 dark:text-white mb-4">Assessment Score Trends</h2>
+                                    {assessments.length === 0 ? (
+                                        <p className="text-sm text-slate-400 text-center py-6">No assessment history found.</p>
+                                    ) : (
+                                        <ReactApexChart options={assessmentChartOpts} series={[{ name: 'Score %', data: assessmentScores }]} type="area" />
+                                    )}
+                                </div>
+                                <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-800 shadow-sm">
+                                    <h2 className="text-sm font-semibold text-slate-700 dark:text-white mb-4 flex items-center gap-1.5">
+                                        <BarChart3 size={15} className="text-blue-500" /> Performance by Category
+                                    </h2>
+                                    {assessments.length === 0 ? (
+                                        <p className="text-sm text-slate-400 text-center py-6">No assessment data available.</p>
+                                    ) : (
+                                        <ReactApexChart options={categoryChartOpts} series={categoryChartSeries} type="bar" />
+                                    )}
+                                </div>
                             </div>
 
                             {/* Detailed scores table */}

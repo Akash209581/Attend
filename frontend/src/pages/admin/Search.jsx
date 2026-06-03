@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { searchStudents, getStudentDetail } from '../../api';
-import { Search as SearchIcon, User, BookOpen, CalendarDays, TrendingUp, History, Award } from 'lucide-react';
+import { Search as SearchIcon, User, BookOpen, CalendarDays, TrendingUp, History, Award, BarChart3 } from 'lucide-react';
 import ReactApexChart from 'react-apexcharts';
 
 function AttBadge({ pct }) {
@@ -210,6 +210,79 @@ export default function Search() {
                                                         tooltip: { y: { formatter: v => v + '%' } },
                                                     };
 
+                                                    // Category overall performance calculations
+                                                    const getCategory = (subjectStr) => {
+                                                        const s = String(subjectStr || '').toLowerCase().trim();
+                                                        if (s.includes('non') || s.includes('non-technical') || s.includes('non technical')) {
+                                                            return 'Non-Technical';
+                                                        }
+                                                        if (s.includes('grand') || s.includes('gt') || s.includes('grand test')) {
+                                                            return 'Grand Test';
+                                                        }
+                                                        return 'Technical';
+                                                    };
+
+                                                    const categoryTotals = {
+                                                        'Technical': { sum: 0, count: 0 },
+                                                        'Non-Technical': { sum: 0, count: 0 },
+                                                        'Grand Test': { sum: 0, count: 0 }
+                                                     };
+
+                                                     (detail.assessments || []).forEach(a => {
+                                                         if (a.marks >= 0) {
+                                                             const cat = getCategory(a.subject);
+                                                             categoryTotals[cat].sum += (a.percentage || 0);
+                                                             categoryTotals[cat].count += 1;
+                                                         }
+                                                     });
+
+                                                     const categoriesData = [
+                                                         { name: 'Technical', avg: categoryTotals['Technical'].count > 0 ? Math.round(categoryTotals['Technical'].sum / categoryTotals['Technical'].count) : 0, count: categoryTotals['Technical'].count },
+                                                         { name: 'Non-Technical', avg: categoryTotals['Non-Technical'].count > 0 ? Math.round(categoryTotals['Non-Technical'].sum / categoryTotals['Non-Technical'].count) : 0, count: categoryTotals['Non-Technical'].count },
+                                                         { name: 'Grand Test', avg: categoryTotals['Grand Test'].count > 0 ? Math.round(categoryTotals['Grand Test'].sum / categoryTotals['Grand Test'].count) : 0, count: categoryTotals['Grand Test'].count }
+                                                     ];
+
+                                                     const categoryChartSeries = [{
+                                                         name: 'Average Score',
+                                                         data: categoriesData.map(c => c.avg)
+                                                     }];
+
+                                                     const categoryChartOpts = {
+                                                         chart: { type: 'bar', height: 160, background: 'transparent', toolbar: { show: false } },
+                                                         plotOptions: {
+                                                             bar: {
+                                                                 borderRadius: 5,
+                                                                 columnWidth: '45%',
+                                                                 distributed: true,
+                                                             }
+                                                         },
+                                                         colors: ['#3b82f6', '#10b981', '#f59e0b'],
+                                                         dataLabels: {
+                                                             enabled: true,
+                                                             formatter: (val) => `${val}%`,
+                                                             style: { fontSize: '10px', colors: ['#fff'] }
+                                                         },
+                                                         xaxis: {
+                                                             categories: categoriesData.map(c => c.name),
+                                                             labels: { style: { colors: '#94a3b8', fontSize: '9px' } }
+                                                         },
+                                                         yaxis: {
+                                                             min: 0,
+                                                             max: 100,
+                                                             labels: { style: { colors: '#94a3b8', fontSize: '10px' }, formatter: v => v + '%' }
+                                                         },
+                                                         grid: { borderColor: '#f1f5f9' },
+                                                         legend: { show: false },
+                                                         tooltip: {
+                                                             y: {
+                                                                 formatter: (val, opts) => {
+                                                                     const catData = categoriesData[opts.dataPointIndex];
+                                                                     return `${val}% (${catData.count} test${catData.count !== 1 ? 's' : ''})`;
+                                                                 }
+                                                             }
+                                                         }
+                                                     };
+
                                                     // Slots calculations
                                                     const totalAttendedSlots = (detail.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
                                                     const totalConductSlots = (detail.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
@@ -359,47 +432,58 @@ export default function Search() {
                                                                         </tbody>
                                                                     </table>
                                                                 </div>
-                                                            ) : activeTab === 'history' ? (
-                                                                <div className="overflow-x-auto border border-slate-100 dark:border-slate-800/80 rounded-2xl">
-                                                                    <table className="w-full text-sm min-w-[500px]">
-                                                                        <thead>
-                                                                            <tr className="bg-slate-50 dark:bg-slate-850/50 border-b border-slate-100 dark:border-slate-800">
-                                                                                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Date</th>
-                                                                                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Status</th>
-                                                                                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Daily %</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                                                            {detail.history.length === 0 ? (
-                                                                                <tr>
-                                                                                    <td colSpan="3" className="text-center py-6 text-slate-400 text-sm">No daily logs found.</td>
-                                                                                </tr>
-                                                                            ) : (
-                                                                                detail.history.map((h, i) => {
-                                                                                    const isPresent = h.totalPercentage > 0;
-                                                                                    const statusColor = isPresent
-                                                                                        ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-                                                                                        : 'text-rose-600 dark:text-rose-400 font-semibold';
-                                                                                    const statusText = isPresent ? '✓ Present' : '✗ Absent';
-                                                                                    return (
-                                                                                        <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-850/40">
-                                                                                            <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                                                                                                {new Date(h.uploadDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
-                                                                                            </td>
-                                                                                            <td className="px-4 py-2.5 text-xs">
-                                                                                                <span className={statusColor}>{statusText}</span>
-                                                                                            </td>
-                                                                                            <td className="px-4 py-2.5 font-mono text-slate-600 dark:text-slate-400">
-                                                                                                {h.totalPercentage}%
-                                                                                            </td>
-                                                                                        </tr>
-                                                                                    );
-                                                                                })
-                                                                            )}
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
+                                            ) : activeTab === 'history' ? (
+                                                <div className="overflow-x-auto border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+                                                    <table className="w-full text-sm min-w-[500px]">
+                                                        <thead>
+                                                            <tr className="bg-slate-50 dark:bg-slate-850/50 border-b border-slate-100 dark:border-slate-800">
+                                                                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Date</th>
+                                                                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Status</th>
+                                                                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Slots Present</th>
+                                                                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Slots Absent</th>
+                                                                <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Daily %</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                                            {detail.history.length === 0 ? (
+                                                                <tr>
+                                                                    <td colSpan="5" className="text-center py-6 text-slate-400 text-sm">No daily logs found.</td>
+                                                                </tr>
                                                             ) : (
+                                                                detail.history.map((h, i) => {
+                                                                    const isPresent = h.totalPercentage > 0;
+                                                                    const statusColor = isPresent
+                                                                        ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                                                                        : 'text-rose-600 dark:text-rose-400 font-semibold';
+                                                                    const statusText = isPresent ? '✓ Present' : '✗ Absent';
+                                                                    const slotsPresent = (h.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
+                                                                    const slotsTotal = (h.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
+                                                                    const slotsAbsent = Math.max(0, slotsTotal - slotsPresent);
+                                                                    return (
+                                                                        <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-850/40">
+                                                                            <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
+                                                                                {new Date(h.uploadDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+                                                                            </td>
+                                                                            <td className="px-4 py-2.5 text-xs">
+                                                                                <span className={statusColor}>{statusText}</span>
+                                                                            </td>
+                                                                            <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300 font-medium">
+                                                                                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{slotsPresent}</span>
+                                                                            </td>
+                                                                            <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300 font-medium">
+                                                                                <span className={slotsAbsent > 0 ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-400"}>{slotsAbsent}</span>
+                                                                            </td>
+                                                                            <td className="px-4 py-2.5 font-mono text-slate-600 dark:text-slate-400">
+                                                                                {h.totalPercentage}%
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })
+                                                            )}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : (
                                                                 <div className="space-y-4">
                                                                     {/* Assessment Table */}
                                                                     <div className="overflow-x-auto border border-slate-100 dark:border-slate-800/80 rounded-2xl">
@@ -476,7 +560,7 @@ export default function Search() {
                                                             </div>
 
                                                             {/* Trend Analysis Grid */}
-                                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                                                 {/* Cumulative Attendance Trend */}
                                                                 <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
                                                                     <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
@@ -498,6 +582,18 @@ export default function Search() {
                                                                         <p className="text-sm text-slate-400 text-center py-10">No assessment trend data available.</p>
                                                                     ) : (
                                                                         <ReactApexChart options={assessmentChartOpts} series={[{ name: 'Score %', data: assessmentScores }]} type="area" height={160} />
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Performance by Category */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <BarChart3 size={14} className="text-blue-500" /> Performance by Category
+                                                                    </h4>
+                                                                    {totalAssessments === 0 ? (
+                                                                        <p className="text-sm text-slate-400 text-center py-10">No assessment data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={categoryChartOpts} series={categoryChartSeries} type="bar" height={160} />
                                                                     )}
                                                                 </div>
                                                             </div>
