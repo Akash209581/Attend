@@ -292,60 +292,6 @@ export default function Search() {
                                                                 ))}
                                                             </div>
 
-                                                            {/* Donut Charts Grid */}
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                {/* Slots Donut Chart */}
-                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50">
-                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
-                                                                        <CalendarDays size={14} className="text-emerald-500" /> Slots Attendance Breakdown
-                                                                    </h4>
-                                                                    {totalConductSlots === 0 ? (
-                                                                        <p className="text-xs text-slate-400 text-center py-10">No slot data available.</p>
-                                                                    ) : (
-                                                                        <ReactApexChart options={slotsDonutOpts} series={slotsDonutSeries} type="donut" height={180} />
-                                                                    )}
-                                                                </div>
-
-                                                                {/* Assessments Donut Chart */}
-                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50">
-                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
-                                                                        <Award size={14} className="text-purple-500" /> Assessment Participation
-                                                                    </h4>
-                                                                    {totalAssessments === 0 ? (
-                                                                        <p className="text-xs text-slate-400 text-center py-10">No assessment data available.</p>
-                                                                    ) : (
-                                                                        <ReactApexChart options={assessmentsDonutOpts} series={assessmentsDonutSeries} type="donut" height={180} />
-                                                                    )}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Trend Analysis Grid */}
-                                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                                                {/* Cumulative Attendance Trend */}
-                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
-                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
-                                                                        <TrendingUp size={14} className="text-indigo-500" /> Cumulative Attendance Trend
-                                                                    </h4>
-                                                                    {crtHistory.length === 0 ? (
-                                                                        <p className="text-sm text-slate-400 text-center py-10">No historical trend data available.</p>
-                                                                    ) : (
-                                                                        <ReactApexChart options={lineOpts} series={[{ name: 'Attendance %', data: runningAvgs }]} type="area" height={160} />
-                                                                    )}
-                                                                </div>
-
-                                                                {/* Assessment Score Trends */}
-                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
-                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
-                                                                        <Award size={14} className="text-purple-500" /> Assessment Score Trends
-                                                                    </h4>
-                                                                    {totalAssessments === 0 ? (
-                                                                        <p className="text-sm text-slate-400 text-center py-10">No assessment trend data available.</p>
-                                                                    ) : (
-                                                                        <ReactApexChart options={assessmentChartOpts} series={[{ name: 'Score %', data: assessmentScores }]} type="area" height={160} />
-                                                                    )}
-                                                                </div>
-                                                            </div>
-
                                                             {/* Tab switchers */}
                                                             <div className="flex gap-2 bg-slate-100 dark:bg-slate-850 p-1 rounded-xl w-fit">
                                                                 <button
@@ -501,6 +447,60 @@ export default function Search() {
                                                                     </div>
                                                                 </div>
                                                             )}
+
+                                                            {/* Donut Charts Grid */}
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {/* Slots Donut Chart */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <CalendarDays size={14} className="text-emerald-500" /> Slots Attendance Breakdown
+                                                                    </h4>
+                                                                    {totalConductSlots === 0 ? (
+                                                                        <p className="text-xs text-slate-400 text-center py-10">No slot data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={slotsDonutOpts} series={slotsDonutSeries} type="donut" height={180} />
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Assessments Donut Chart */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <Award size={14} className="text-purple-500" /> Assessment Participation
+                                                                    </h4>
+                                                                    {totalAssessments === 0 ? (
+                                                                        <p className="text-xs text-slate-400 text-center py-10">No assessment data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={assessmentsDonutOpts} series={assessmentsDonutSeries} type="donut" height={180} />
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Trend Analysis Grid */}
+                                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                                {/* Cumulative Attendance Trend */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <TrendingUp size={14} className="text-indigo-500" /> Cumulative Attendance Trend
+                                                                    </h4>
+                                                                    {crtHistory.length === 0 ? (
+                                                                        <p className="text-sm text-slate-400 text-center py-10">No historical trend data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={lineOpts} series={[{ name: 'Attendance %', data: runningAvgs }]} type="area" height={160} />
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Assessment Score Trends */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <Award size={14} className="text-purple-500" /> Assessment Score Trends
+                                                                    </h4>
+                                                                    {totalAssessments === 0 ? (
+                                                                        <p className="text-sm text-slate-400 text-center py-10">No assessment trend data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={assessmentChartOpts} series={[{ name: 'Score %', data: assessmentScores }]} type="area" height={160} />
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     );
                                                 })()}
