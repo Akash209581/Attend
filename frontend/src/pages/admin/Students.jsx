@@ -3,9 +3,10 @@ import {
     getAdminSections, getSectionStudents, downloadCSV,
     getSubjectNames, getStudentsBySubject,
 } from '../../api';
-import { Download, Users, Filter, X, AlertTriangle, AlertCircle, Target, TrendingDown } from 'lucide-react';
+import { Download, Users, Filter, X, AlertTriangle, AlertCircle, Target, TrendingDown, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import StatCard from '../../components/StatCard';
+import ReactApexChart from 'react-apexcharts';
 
 /* ── Attendance badge ─────────────────────────────────────────────────────── */
 function AttBadge({ pct }) {
@@ -152,6 +153,155 @@ export default function AdminStudents() {
         };
     }, [filteredStudents, subjectMode, subjectFilter]);
 
+    // Charts data and configurations
+    const chartData = useMemo(() => {
+        if (!filteredStudents.length) {
+            return {
+                donutSeries: [0, 0, 0],
+                histogramSeries: [{ name: 'Students', data: [0, 0, 0, 0, 0, 0] }],
+                topBottomSeries: [{ name: 'Attendance %', data: [] }],
+                topBottomCategories: []
+            };
+        }
+
+        let regular = 0;
+        let borderline = 0;
+        let critical = 0;
+
+        let r1 = 0; // <50%
+        let r2 = 0; // 50-60%
+        let r3 = 0; // 60-75%
+        let r4 = 0; // 75-85%
+        let r5 = 0; // 85-90%
+        let r6 = 0; // 90-100%
+
+        const studentData = filteredStudents.map(s => {
+            const rawPct = subjectMode ? getSubjectPct(s) : s.totalPercentage;
+            const parsed = parseFloat(rawPct);
+            const pct = isNaN(parsed) ? 0 : parsed;
+            return { name: s.name, rollNo: s.rollNo, pct };
+        });
+
+        studentData.forEach(s => {
+            const pct = s.pct;
+            if (pct >= 75) regular++;
+            else if (pct >= 60) borderline++;
+            else critical++;
+
+            if (pct < 50) r1++;
+            else if (pct < 60) r2++;
+            else if (pct < 75) r3++;
+            else if (pct < 85) r4++;
+            else if (pct < 90) r5++;
+            else r6++;
+        });
+
+        // Top & Bottom students
+        const sorted = [...studentData].sort((a, b) => b.pct - a.pct);
+        const top5 = sorted.slice(0, 5);
+        const bottom5 = [...sorted].reverse().slice(0, 5).reverse();
+
+        let topBottomList = [];
+        if (studentData.length <= 10) {
+            topBottomList = sorted;
+        } else {
+            topBottomList = [...bottom5, ...top5];
+        }
+
+        return {
+            donutSeries: [regular, borderline, critical],
+            histogramSeries: [{
+                name: 'Students',
+                data: [r1, r2, r3, r4, r5, r6]
+            }],
+            topBottomSeries: [{
+                name: 'Attendance %',
+                data: topBottomList.map(s => s.pct)
+            }],
+            topBottomCategories: topBottomList.map(s => s.name || s.rollNo)
+        };
+    }, [filteredStudents, subjectMode, subjectFilter]);
+
+    const donutOpts = {
+        chart: { type: 'donut', height: 160, background: 'transparent' },
+        labels: ['Regular (≥75%)', 'Borderline (60-75%)', 'Critical (<60%)'],
+        colors: ['#10b981', '#f59e0b', '#f43f5e'],
+        legend: { position: 'bottom', labels: { colors: '#94a3b8' } },
+        stroke: { width: 0 },
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '65%',
+                    labels: {
+                        show: true,
+                        total: {
+                            show: true,
+                            label: 'Students',
+                            color: '#94a3b8',
+                            formatter: () => filteredStudents.length
+                        }
+                    }
+                }
+            }
+        },
+        dataLabels: { enabled: false }
+    };
+
+    const histogramOpts = {
+        chart: { type: 'bar', height: 160, background: 'transparent', toolbar: { show: false } },
+        plotOptions: {
+            bar: {
+                borderRadius: 4,
+                columnWidth: '50%',
+                distributed: true
+            }
+        },
+        colors: ['#ef4444', '#f43f5e', '#f59e0b', '#3b82f6', '#6366f1', '#10b981'],
+        xaxis: {
+            categories: ['<50%', '50-60%', '60-75%', '75-85%', '85-90%', '90-100%'],
+            labels: { style: { colors: '#94a3b8', fontSize: '9px' } }
+        },
+        yaxis: {
+            labels: { style: { colors: '#94a3b8', fontSize: '9px' } }
+        },
+        grid: { borderColor: '#f1f5f9' },
+        legend: { show: false },
+        dataLabels: { enabled: false }
+    };
+
+    const topBottomOpts = {
+        chart: { type: 'bar', height: 160, background: 'transparent', toolbar: { show: false } },
+        plotOptions: {
+            bar: {
+                horizontal: true,
+                borderRadius: 4,
+                barHeight: '65%',
+                distributed: true
+            }
+        },
+        colors: chartData.topBottomSeries[0].data.map(val => val >= 75 ? '#10b981' : val >= 60 ? '#f59e0b' : '#ef4444'),
+        xaxis: {
+            max: 100,
+            labels: { style: { colors: '#94a3b8', fontSize: '9px' }, formatter: v => v + '%' }
+        },
+        yaxis: {
+            categories: chartData.topBottomCategories,
+            labels: { 
+                style: { colors: '#94a3b8', fontSize: '9px' },
+                formatter: (val) => {
+                    return val && val.length > 12 ? val.substring(0, 10) + '..' : val;
+                }
+            }
+        },
+        grid: { borderColor: '#f1f5f9' },
+        legend: { show: false },
+        dataLabels: { 
+            enabled: true, 
+            formatter: v => v + '%',
+            style: { fontSize: '9px', colors: ['#fff'] }
+        }
+    };
+
     /* ── Shared select className ── */
     const selectCls = "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 cursor-pointer";
 
@@ -173,12 +323,12 @@ export default function AdminStudents() {
 
                 <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-end gap-3">
 
-                    {/* 1. Section dropdown */}
+                    {/* 1. Year dropdown */}
                     <div className="flex flex-col gap-1 w-full sm:w-auto">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Section</label>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Year</label>
                         <select value={selected} onChange={e => { setSelected(e.target.value); setPage(1); }}
                             className={`${selectCls} w-full`}>
-                            <option value="all">All Sections</option>
+                            <option value="all">All Years</option>
                             {sections.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
                     </div>
@@ -193,19 +343,25 @@ export default function AdminStudents() {
                         </select>
                     </div>
 
-                    {/* 3. Threshold dropdown */}
+                    {/* 3. Threshold Numeric Input */}
                     <div className="flex flex-col gap-1 w-full sm:w-auto">
-                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Show below</label>
-                        <select value={threshold} onChange={e => { setThreshold(e.target.value); setPage(1); }}
-                            className={`${selectCls} w-full`}>
-                            <option value="all">All Students</option>
-                            <option value="90">90% — Below 90%</option>
-                            <option value="85">85% — Below 85%</option>
-                            <option value="80">80% — Below 80%</option>
-                            <option value="75">75% — Below 75%</option>
-                            <option value="60">60% — Below 60%</option>
-                            <option value="50">50% — Below 50%</option>
-                        </select>
+                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Show below %</label>
+                        <div className="relative flex items-center">
+                            <input 
+                                type="number" 
+                                min="0" 
+                                max="100"
+                                value={threshold === 'all' ? '' : threshold} 
+                                onChange={e => { 
+                                    const val = e.target.value;
+                                    setThreshold(val === '' ? 'all' : val);
+                                    setPage(1); 
+                                }}
+                                placeholder="All"
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl pl-3 pr-8 py-2 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 w-full sm:w-28"
+                            />
+                            <span className="absolute right-3 text-slate-400 text-xs font-semibold">%</span>
+                        </div>
                     </div>
 
                     {/* 4. Text search */}
@@ -234,7 +390,7 @@ export default function AdminStudents() {
                         value={stats.total}
                         icon={Users}
                         color="indigo"
-                        sub={subjectMode ? `For ${subjectFilter}` : (selected === 'all' ? "All Sections" : `Section ${selected}`)}
+                        sub={subjectMode ? `For ${subjectFilter}` : (selected === 'all' ? "All Years" : selected)}
                     />
                     <StatCard
                         label="Critical (<60%)"
@@ -257,6 +413,48 @@ export default function AdminStudents() {
                         color="indigo"
                         sub="Of current selection"
                     />
+                </div>
+            )}
+
+            {/* ── Visual Analytics Section ── */}
+            {!isLoading && filteredStudents.length > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    {/* Attendance Distribution Donut */}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                                <Target size={14} className="text-indigo-500" /> Attendance Distribution
+                            </h3>
+                            <p className="text-[10px] text-slate-400 mb-4">Breakdown of students by compliance status</p>
+                        </div>
+                        <ReactApexChart options={donutOpts} series={chartData.donutSeries} type="donut" height={180} />
+                    </div>
+
+                    {/* Attendance Range Histogram */}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                                <BarChart3 size={14} className="text-emerald-500" /> Student Counts by Range
+                            </h3>
+                            <p className="text-[10px] text-slate-400 mb-4">Number of students falling in attendance bands</p>
+                        </div>
+                        <ReactApexChart options={histogramOpts} series={chartData.histogramSeries} type="bar" height={180} />
+                    </div>
+
+                    {/* Top & Bottom Performers */}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1 flex items-center gap-1.5">
+                                <TrendingDown size={14} className="text-rose-500" /> Key Performers (Top/Bottom)
+                            </h3>
+                            <p className="text-[10px] text-slate-400 mb-4">Highest and lowest attendance records in selection</p>
+                        </div>
+                        {chartData.topBottomCategories.length === 0 ? (
+                            <p className="text-xs text-slate-400 text-center py-10">No data available.</p>
+                        ) : (
+                            <ReactApexChart options={topBottomOpts} series={chartData.topBottomSeries} type="bar" height={180} />
+                        )}
+                    </div>
                 </div>
             )}
 
