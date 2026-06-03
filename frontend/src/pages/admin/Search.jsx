@@ -210,6 +210,70 @@ export default function Search() {
                                                         tooltip: { y: { formatter: v => v + '%' } },
                                                     };
 
+                                                    // Slots calculations
+                                                    const totalAttendedSlots = (detail.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
+                                                    const totalConductSlots = (detail.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
+                                                    const totalMissedSlots = Math.max(0, totalConductSlots - totalAttendedSlots);
+
+                                                    const slotsDonutSeries = [totalAttendedSlots, totalMissedSlots];
+                                                    const slotsDonutOpts = {
+                                                        chart: { type: 'donut', height: 160, background: 'transparent' },
+                                                        labels: ['Attended', 'Missed'],
+                                                        colors: ['#10b981', '#ef4444'],
+                                                        legend: { position: 'bottom', labels: { colors: '#94a3b8' } },
+                                                        stroke: { width: 0 },
+                                                        plotOptions: {
+                                                            pie: {
+                                                                donut: {
+                                                                    size: '70%',
+                                                                    labels: {
+                                                                        show: true,
+                                                                        total: {
+                                                                            show: true,
+                                                                            label: 'Total Slots',
+                                                                            color: '#94a3b8',
+                                                                            formatter: () => totalConductSlots
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        dataLabels: { enabled: false },
+                                                        tooltip: { y: { formatter: val => `${val} slots` } }
+                                                    };
+
+                                                    // Assessments calculations
+                                                    const totalAssessments = (detail.assessments || []).length;
+                                                    const assessmentsAttended = (detail.assessments || []).filter(a => a.marks >= 0).length;
+                                                    const assessmentsAbsent = Math.max(0, totalAssessments - assessmentsAttended);
+
+                                                    const assessmentsDonutSeries = [assessmentsAttended, assessmentsAbsent];
+                                                    const assessmentsDonutOpts = {
+                                                        chart: { type: 'donut', height: 160, background: 'transparent' },
+                                                        labels: ['Taken', 'Absent'],
+                                                        colors: ['#8b5cf6', '#f59e0b'],
+                                                        legend: { position: 'bottom', labels: { colors: '#94a3b8' } },
+                                                        stroke: { width: 0 },
+                                                        plotOptions: {
+                                                            pie: {
+                                                                donut: {
+                                                                    size: '70%',
+                                                                    labels: {
+                                                                        show: true,
+                                                                        total: {
+                                                                            show: true,
+                                                                            label: 'Total Tests',
+                                                                            color: '#94a3b8',
+                                                                            formatter: () => totalAssessments
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        },
+                                                        dataLabels: { enabled: false },
+                                                        tooltip: { y: { formatter: val => `${val} tests` } }
+                                                    };
+
                                                     return (
                                                         <div className="space-y-4">
                                                             {/* Stats cards */}
@@ -221,21 +285,65 @@ export default function Search() {
                                                                 ].map(({ l, v, c }) => (
                                                                     <div key={l} className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-2.5 sm:p-3 border border-slate-100 dark:border-slate-800/50 text-center">
                                                                         <p className="text-[10px] text-slate-400 mb-0.5 uppercase tracking-wide">{l}</p>
-                                                                        <p className={`text-base sm:text-xl font-bold text-${c}-500`}>{v}</p>
+                                                                        <p className={`text-base sm:text-xl font-bold ${
+                                                                            c === 'indigo' ? 'text-indigo-500' : c === 'emerald' ? 'text-emerald-500' : 'text-rose-500'
+                                                                        }`}>{v}</p>
                                                                     </div>
                                                                 ))}
                                                             </div>
 
-                                                            {/* Line chart */}
-                                                            <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
-                                                                <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
-                                                                    <TrendingUp size={14} className="text-indigo-500" /> Cumulative Attendance Trend
-                                                                </h4>
-                                                                {crtHistory.length === 0 ? (
-                                                                    <p className="text-sm text-slate-400 text-center py-6">No historical trend data available.</p>
-                                                                ) : (
-                                                                    <ReactApexChart options={lineOpts} series={[{ name: 'Attendance %', data: runningAvgs }]} type="area" height={160} />
-                                                                )}
+                                                            {/* Donut Charts Grid */}
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                {/* Slots Donut Chart */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <CalendarDays size={14} className="text-emerald-500" /> Slots Attendance Breakdown
+                                                                    </h4>
+                                                                    {totalConductSlots === 0 ? (
+                                                                        <p className="text-xs text-slate-400 text-center py-10">No slot data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={slotsDonutOpts} series={slotsDonutSeries} type="donut" height={180} />
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Assessments Donut Chart */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <Award size={14} className="text-purple-500" /> Assessment Participation
+                                                                    </h4>
+                                                                    {totalAssessments === 0 ? (
+                                                                        <p className="text-xs text-slate-400 text-center py-10">No assessment data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={assessmentsDonutOpts} series={assessmentsDonutSeries} type="donut" height={180} />
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Trend Analysis Grid */}
+                                                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                                {/* Cumulative Attendance Trend */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <TrendingUp size={14} className="text-indigo-500" /> Cumulative Attendance Trend
+                                                                    </h4>
+                                                                    {crtHistory.length === 0 ? (
+                                                                        <p className="text-sm text-slate-400 text-center py-10">No historical trend data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={lineOpts} series={[{ name: 'Attendance %', data: runningAvgs }]} type="area" height={160} />
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Assessment Score Trends */}
+                                                                <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
+                                                                    <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
+                                                                        <Award size={14} className="text-purple-500" /> Assessment Score Trends
+                                                                    </h4>
+                                                                    {totalAssessments === 0 ? (
+                                                                        <p className="text-sm text-slate-400 text-center py-10">No assessment trend data available.</p>
+                                                                    ) : (
+                                                                        <ReactApexChart options={assessmentChartOpts} series={[{ name: 'Score %', data: assessmentScores }]} type="area" height={160} />
+                                                                    )}
+                                                                </div>
                                                             </div>
 
                                                             {/* Tab switchers */}
@@ -347,25 +455,13 @@ export default function Search() {
                                                                 </div>
                                                             ) : (
                                                                 <div className="space-y-4">
-                                                                    {/* Assessment Chart */}
-                                                                    <div className="bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-3 sm:p-4 border border-slate-100 dark:border-slate-800/50">
-                                                                        <h4 className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 uppercase tracking-wide">
-                                                                            <Award size={14} className="text-purple-500" /> Assessment Score Trends
-                                                                        </h4>
-                                                                        {!detail.assessments || detail.assessments.length === 0 ? (
-                                                                            <p className="text-sm text-slate-400 text-center py-6">No assessment data available.</p>
-                                                                        ) : (
-                                                                            <ReactApexChart options={assessmentChartOpts} series={[{ name: 'Score %', data: assessmentScores }]} type="area" height={160} />
-                                                                        )}
-                                                                    </div>
-
                                                                     {/* Assessment Table */}
                                                                     <div className="overflow-x-auto border border-slate-100 dark:border-slate-800/80 rounded-2xl">
                                                                         <table className="w-full text-sm min-w-[500px]">
                                                                             <thead>
                                                                                 <tr className="bg-slate-50 dark:bg-slate-850/50 border-b border-slate-100 dark:border-slate-800">
+                                                                                    <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Batch / Subject</th>
                                                                                     <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Assessment Name</th>
-                                                                                    <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Date</th>
                                                                                     <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Marks</th>
                                                                                     <th className="text-left px-4 py-2 text-xs font-semibold text-slate-500 uppercase">Percentage</th>
                                                                                 </tr>
