@@ -30,8 +30,8 @@ export const studentLogin = (d) => api.post('/auth/student', d);
 // ── Admin ─────────────────────────────────────────────────────────────────────
 export const getAdminStats = () => api.get('/admin/stats');
 export const getAdminSections = () => api.get('/admin/sections');
-export const getSectionStudents = (sec, page = 1, threshold = null) =>
-    api.get(`/admin/sections/${sec}/students`, { params: { page, limit: 50, threshold } });
+export const getSectionStudents = (sec, page = 1, minThreshold = null, maxThreshold = null) =>
+    api.get(`/admin/sections/${sec}/students`, { params: { page, limit: 50, minThreshold, maxThreshold } });
 export const getYearStudents = (year, page = 1) =>
     api.get(`/admin/year/${year}/students?page=${page}&limit=50`);
 export const searchStudents = (params) => api.get('/admin/search', { params });
@@ -47,6 +47,7 @@ export const uploadAssessments = (formData) =>
     api.post('/admin/assessments/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const getAssessments = (params) => api.get('/admin/assessments', { params });
 export const deleteAssessmentUpload = (id) => api.delete(`/admin/assessments/uploads/${id}`);
+export const getSectionPerformance = (section) => api.get('/admin/assessments/section-performance', { params: { section } });
 export const getStudentAssessments = () => api.get('/student/assessments');
 export const getSubjectNames = () => api.get('/admin/subject-names');
 export const getStudentsBySubject = (params) => api.get('/admin/students-by-subject', { params });

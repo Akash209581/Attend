@@ -516,3 +516,37 @@ exports.deleteAssessmentUpload = async (req, res) => {
         client.release();
     }
 };
+
+// Retrieve section-wise aggregated assessment performance over time
+exports.getSectionPerformance = async (req, res) => {
+    const { section } = req.query; // 'CRT-3RD' or 'CRT-4TH' or 'all'
+    
+    let sql = `
+        SELECT 
+            a.assessment_name,
+            a.subject,
+            a.upload_date,
+            ROUND(AVG(a.percentage), 2) as avg_percentage
+        FROM student_assessments a
+        LEFT JOIN students s ON s.roll_no = a.roll_no
+        WHERE a.marks >= 0
+    `;
+    const params = [];
+    if (section && section !== 'all') {
+        params.push(section);
+        sql += ` AND s.section = $${params.length}`;
+    }
+    
+    sql += `
+        GROUP BY a.assessment_name, a.subject, a.upload_date
+        ORDER BY a.upload_date ASC
+    `;
+
+    try {
+        const res2 = await query(sql, params);
+        res.json(res2.rows);
+    } catch (err) {
+        console.error('Failed to get section performance:', err);
+        res.status(500).json({ message: 'Database error: ' + err.message });
+    }
+};

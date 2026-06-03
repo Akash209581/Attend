@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
-    LayoutDashboard, Upload, BookOpen, Search, Users, LogOut, Award
+    LayoutDashboard, Upload, Search, Users, LogOut, Award
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import cseLogo from '../assets/logo.png';
@@ -8,7 +8,6 @@ import cseLogo from '../assets/logo.png';
 const links = [
     { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/admin/upload', icon: Upload, label: 'Upload Attendance' },
-    { to: '/admin/sections', icon: BookOpen, label: 'Section View' },
     { to: '/admin/students', icon: Users, label: 'All Students' },
     { to: '/admin/assessments', icon: Award, label: 'Assessments' },
     { to: '/admin/search', icon: Search, label: 'Search Student' },

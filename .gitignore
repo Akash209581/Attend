@@ -1,7 +1,7 @@
 # Student attendance data sheets (Sensitive)
-*.xlsx
-*.xls
-*.csv
+# *.xlsx
+# *.xls
+# *.csv
 # Ignore JSON data files but allow npm config files
 *.json
 !package.json

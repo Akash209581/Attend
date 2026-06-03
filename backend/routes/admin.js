@@ -22,7 +22,8 @@ const {
 const {
     uploadAssessments,
     getAssessments,
-    deleteAssessmentUpload
+    deleteAssessmentUpload,
+    getSectionPerformance
 } = require('../controllers/assessmentController');
 
 // Multer in-memory storage for Excel files
@@ -79,6 +80,7 @@ router.get('/download/:section', downloadCSV);
 // Assessments
 router.post('/assessments/upload', superAdminOnly, upload.single('file'), uploadAssessments);
 router.get('/assessments', getAssessments);
+router.get('/assessments/section-performance', getSectionPerformance);
 router.delete('/assessments/uploads/:id', superAdminOnly, deleteAssessmentUpload);
 
 module.exports = router;

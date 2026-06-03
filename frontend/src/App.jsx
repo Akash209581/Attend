@@ -10,7 +10,6 @@ import StudentLogin from './pages/StudentLogin';
 import AdminLayout from './layouts/AdminLayout';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUpload from './pages/admin/Upload';
-import AdminSectionView from './pages/admin/SectionView';
 import AdminSearch from './pages/admin/Search';
 import AdminStudents from './pages/admin/Students';
 import AdminAssessments from './pages/admin/Assessments';
@@ -52,7 +51,7 @@ function AppRoutes() {
         <Route element={<ProtectedAdmin><AdminLayout /></ProtectedAdmin>}>
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="upload" element={user?.adminRole === 'restricted_admin' ? <Navigate to="/admin/dashboard" replace /> : <AdminUpload />} />
-          <Route path="sections" element={<AdminSectionView />} />
+
           <Route path="search" element={<AdminSearch />} />
           <Route path="students" element={<AdminStudents />} />
           <Route path="assessments" element={<AdminAssessments />} />

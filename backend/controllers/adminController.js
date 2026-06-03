@@ -664,7 +664,8 @@ exports.getSectionStudents = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
     const offset = (page - 1) * limit;
-    const threshold = req.query.threshold ? parseFloat(req.query.threshold) : null;
+    const minThreshold = (req.query.minThreshold && !isNaN(parseFloat(req.query.minThreshold))) ? parseFloat(req.query.minThreshold) : null;
+    const maxThreshold = (req.query.maxThreshold && !isNaN(parseFloat(req.query.maxThreshold))) ? parseFloat(req.query.maxThreshold) : null;
 
     const isAll = !section || section === 'all';
     
@@ -675,8 +676,16 @@ exports.getSectionStudents = async (req, res) => {
         countParams.push(section);
         countSql += ` AND section = $${countParams.length}`;
     }
-    if (threshold !== null) {
-        countParams.push(threshold);
+    if (minThreshold !== null) {
+        countParams.push(minThreshold);
+        countSql += ` AND total_percentage >= $${countParams.length}`;
+    }
+    if (maxThreshold !== null) {
+        countParams.push(maxThreshold);
+        countSql += ` AND total_percentage <= $${countParams.length}`;
+    }
+    if (req.query.threshold && minThreshold === null && maxThreshold === null) {
+        countParams.push(parseFloat(req.query.threshold));
         countSql += ` AND total_percentage < $${countParams.length}`;
     }
 
@@ -690,8 +699,16 @@ exports.getSectionStudents = async (req, res) => {
         studParams.push(section);
         studSql += ` AND section = $${studParams.length}`;
     }
-    if (threshold !== null) {
-        studParams.push(threshold);
+    if (minThreshold !== null) {
+        studParams.push(minThreshold);
+        studSql += ` AND total_percentage >= $${studParams.length}`;
+    }
+    if (maxThreshold !== null) {
+        studParams.push(maxThreshold);
+        studSql += ` AND total_percentage <= $${studParams.length}`;
+    }
+    if (req.query.threshold && minThreshold === null && maxThreshold === null) {
+        studParams.push(parseFloat(req.query.threshold));
         studSql += ` AND total_percentage < $${studParams.length}`;
     }
     
@@ -846,17 +863,31 @@ exports.getSubjectNames = async (req, res) => {
 
 // ─── Students filtered by subject + attendance threshold ─────────────────────
 exports.getStudentsBySubject = async (req, res) => {
-    const { subject, threshold = '75', section, year } = req.query;
-    const thresholdNum = parseFloat(threshold);
+    const { subject, minThreshold, maxThreshold, section, year } = req.query;
+    const minThresholdNum = (minThreshold && !isNaN(parseFloat(minThreshold))) ? parseFloat(minThreshold) : null;
+    const maxThresholdNum = (maxThreshold && !isNaN(parseFloat(maxThreshold))) ? parseFloat(maxThreshold) : null;
 
     let sql = `
         SELECT s.id, s.roll_no, s.name, s.section, s.year, s.total_percentage,
                ss.subject, ss.attended, ss.total, ss.percentage
         FROM students s
         JOIN student_subjects ss ON ss.student_id = s.id
-        WHERE ss.percentage < $1
+        WHERE 1=1
     `;
-    const params = [thresholdNum];
+    const params = [];
+
+    if (minThresholdNum !== null) {
+        params.push(minThresholdNum);
+        sql += ` AND ss.percentage >= $${params.length}`;
+    }
+    if (maxThresholdNum !== null) {
+        params.push(maxThresholdNum);
+        sql += ` AND ss.percentage <= $${params.length}`;
+    }
+    if (req.query.threshold && minThresholdNum === null && maxThresholdNum === null) {
+        params.push(parseFloat(req.query.threshold));
+        sql += ` AND ss.percentage < $${params.length}`;
+    }
 
     if (subject) {
         params.push(subject);
