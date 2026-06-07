@@ -13,6 +13,7 @@ const todayStr = () => {
 export default function AdminUpload() {
     const [file, setFile] = useState(null);
     const [year, setYear] = useState('3');
+    const [totalSlots, setTotalSlots] = useState('3');
     const [uploadDate, setUploadDate] = useState(todayStr());
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -67,6 +68,7 @@ export default function AdminUpload() {
         const fd = new FormData();
         fd.append('file', file);
         fd.append('year', year);
+        fd.append('totalSlots', totalSlots);
         fd.append('uploadDate', uploadDate);
         fd.append('section', year === '3' ? 'CRT-3RD' : 'CRT-4TH');
 
@@ -130,6 +132,29 @@ export default function AdminUpload() {
                                 >
                                     <div className="font-semibold">{label}</div>
                                     <div className="text-xs opacity-70 mt-0.5">{desc}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Slots conducted Selector */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                            <GraduationCap size={14} />
+                            Daily Slots Conducted
+                        </label>
+                        <div className="flex gap-2">
+                            {['1', '2', '3'].map((s) => (
+                                <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => setTotalSlots(s)}
+                                    className={`flex-1 rounded-xl py-2.5 text-sm font-semibold border-2 transition-all text-center ${totalSlots === s
+                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
+                                        : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:border-indigo-300'
+                                        }`}
+                                >
+                                    {s} Slot{s !== '1' ? 's' : ''}
                                 </button>
                             ))}
                         </div>

@@ -70,7 +70,7 @@ const parseBatchCell = (val) => {
     };
 };
 
-const parseExcelBuffer = (buffer) => {
+const parseExcelBuffer = (buffer, totalSlots = 3) => {
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
@@ -165,25 +165,24 @@ const parseExcelBuffer = (buffer) => {
             pct = pct * 100;
         }
 
-        // Determine daily slots attended (max 3 slots per day)
-        let attended = 0;
-        if (pct >= 85) attended = 3;
-        else if (pct >= 50) attended = 2;
-        else if (pct >= 15) attended = 1;
-        else attended = 0;
+        // Determine daily slots attended dynamically
+        const attended = Math.round((pct / 100) * totalSlots);
+
+        // Calculate percentage from slots attended to ensure consistency
+        const calculatedPct = totalSlots > 0 ? Math.round((attended / totalSlots) * 10000) / 100 : 0;
 
         const subjects = [{
             subject: batchName,
             attended: attended,
-            total: 3,
-            percentage: pct,
+            total: totalSlots,
+            percentage: calculatedPct,
             batchName: batchName
         }];
 
         records.push({
             rollNo,
             name,
-            totalPercentage: pct,
+            totalPercentage: calculatedPct,
             subjects,
             training: '-',
             counseling: '-',
@@ -421,6 +420,7 @@ const bulkUpsertAttendanceSubjects = async (client, records, attRollToId) => {
 exports.uploadAttendance = async (req, res) => {
     const { section, year, uploadDate } = req.body;
     const yearNum = parseInt(year) || 3;
+    const totalSlots = parseInt(req.body.totalSlots) || 3;
     if (!req.file) return res.status(400).json({ message: 'Excel file (.xlsx) is required' });
 
     // Parse upload date — treat date string as local date (not UTC) to avoid timezone issues
@@ -443,7 +443,7 @@ exports.uploadAttendance = async (req, res) => {
 
     let records;
     try {
-        const parsed = parseExcelBuffer(req.file.buffer);
+        const parsed = parseExcelBuffer(req.file.buffer, totalSlots);
         records = parsed.records;
     } catch (err) {
         return res.status(400).json({ message: 'Failed to parse Excel file: ' + err.message });

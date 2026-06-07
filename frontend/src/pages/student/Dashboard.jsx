@@ -884,6 +884,7 @@ export default function StudentDashboard() {
                                                 const slotsPresent = (h.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
                                                 const slotsTotal = (h.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
                                                 const slotsAbsent = Math.max(0, slotsTotal - slotsPresent);
+                                                const calculatedPct = slotsTotal > 0 ? Math.round((slotsPresent / slotsTotal) * 100) : 0;
                                                 return (
                                                     <tr key={h._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
                                                         <td className="px-4 py-3 text-slate-700 dark:text-slate-300 font-medium">
@@ -897,7 +898,7 @@ export default function StudentDashboard() {
                                                             <span className={slotsAbsent > 0 ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-455"}>{slotsAbsent}</span>
                                                         </td>
                                                         <td className="px-4 py-3">
-                                                            <AttBadge pct={Math.round(h.totalPercentage || 0)} />
+                                                            <AttBadge pct={calculatedPct} />
                                                         </td>
                                                     </tr>
                                                 );

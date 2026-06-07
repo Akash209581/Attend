@@ -451,14 +451,15 @@ export default function Search() {
                                                                 </tr>
                                                             ) : (
                                                                 detail.history.map((h, i) => {
-                                                                    const isPresent = h.totalPercentage > 0;
+                                                                    const slotsPresent = (h.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
+                                                                    const slotsTotal = (h.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
+                                                                    const slotsAbsent = Math.max(0, slotsTotal - slotsPresent);
+                                                                    const calculatedPct = slotsTotal > 0 ? Math.round((slotsPresent / slotsTotal) * 10000) / 100 : 0;
+                                                                    const isPresent = slotsPresent > 0;
                                                                     const statusColor = isPresent
                                                                         ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
                                                                         : 'text-rose-600 dark:text-rose-400 font-semibold';
                                                                     const statusText = isPresent ? '✓ Present' : '✗ Absent';
-                                                                    const slotsPresent = (h.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
-                                                                    const slotsTotal = (h.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
-                                                                    const slotsAbsent = Math.max(0, slotsTotal - slotsPresent);
                                                                     return (
                                                                         <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-850/40">
                                                                             <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
@@ -474,7 +475,7 @@ export default function Search() {
                                                                                 <span className={slotsAbsent > 0 ? "text-rose-600 dark:text-rose-400 font-semibold" : "text-slate-400"}>{slotsAbsent}</span>
                                                                             </td>
                                                                             <td className="px-4 py-2.5 font-mono text-slate-600 dark:text-slate-400">
-                                                                                {h.totalPercentage}%
+                                                                                {calculatedPct.toFixed(2).replace(/\.00$/, '')}%
                                                                             </td>
                                                                         </tr>
                                                                     );
