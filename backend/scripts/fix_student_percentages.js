@@ -8,18 +8,24 @@ async function fixPercentages() {
     try {
         await client.query('BEGIN');
 
-        // Step 1: Repair attendance_subjects where total slots is 0 (or null)
-        console.log('1. Correcting 0-slot records in attendance_subjects...');
+        // Step 1: Repair attendance_subjects to match daily overall percentage
+        console.log('1. Correcting slots in attendance_subjects according to daily percentage...');
         const fixSubjectsRes = await client.query(`
             UPDATE attendance_subjects asub
-            SET total = 3,
-                attended = ROUND((COALESCE(ar.total_percentage, 0)::numeric / 100.0) * 3),
+            SET total = CASE 
+                            WHEN ABS(COALESCE(ar.total_percentage, 0)::numeric - 50) < 1 THEN 2
+                            ELSE 3
+                        END,
+                attended = ROUND((COALESCE(ar.total_percentage, 0)::numeric / 100.0) * 
+                                  CASE 
+                                      WHEN ABS(COALESCE(ar.total_percentage, 0)::numeric - 50) < 1 THEN 2
+                                      ELSE 3
+                                  END),
                 percentage = COALESCE(ar.total_percentage, 0)
             FROM attendance_records ar
             WHERE asub.attendance_id = ar.id
-              AND (asub.total = 0 OR asub.total IS NULL)
         `);
-        console.log(`   Corrected ${fixSubjectsRes.rowCount} daily subject records where total was 0.`);
+        console.log(`   Corrected ${fixSubjectsRes.rowCount} daily subject records based on daily percentages.`);
 
         // Step 2: Recalculate and rebuild student_subjects aggregates
         console.log('2. Rebuilding student_subjects table...');
