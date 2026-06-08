@@ -306,11 +306,11 @@ function AttendancePredictor({ subjects, history }) {
     let totalConducted = 0;
 
     if (crtHistory.length > 0) {
-        totalConducted = crtHistory.length * 3;
         totalAttended = crtHistory.reduce((sum, h) => {
-            const dayPct = parseFloat(h.totalPercentage) || 0;
-            const dayAttended = Math.round((dayPct / 100) * 3);
-            return sum + dayAttended;
+            return sum + (h.subjects || []).reduce((sSum, s) => sSum + (s.attended || 0), 0);
+        }, 0);
+        totalConducted = crtHistory.reduce((sum, h) => {
+            return sum + (h.subjects || []).reduce((sSum, s) => sSum + (s.total || 0), 0);
         }, 0);
     } else {
         totalAttended = subjects.reduce((sum, s) => sum + (s.attended || 0), 0);
@@ -928,11 +928,15 @@ export default function StudentDashboard() {
                     // Daily raw scores (100 for full day, 50 for half day, 0 for absent)
                     const dailyValues = crtHistory.map(h => Math.round(parseFloat(h.totalPercentage) || 0));
 
-                    // Calculate running cumulative averages for the area trend chart
-                    let runningSum = 0;
-                    const runningAvgs = dailyValues.map((v, i) => {
-                        runningSum += v;
-                        return Math.round(runningSum / (i + 1));
+                    // Calculate running cumulative averages for the area trend chart using weighted slot totals
+                    let runningAttended = 0;
+                    let runningTotal = 0;
+                    const runningAvgs = crtHistory.map(h => {
+                        const slotsPresent = (h.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
+                        const slotsTotal = (h.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
+                        runningAttended += slotsPresent;
+                        runningTotal += slotsTotal;
+                        return runningTotal > 0 ? Math.round((runningAttended / runningTotal) * 100) : 0;
                     });
 
                     // Daily change in cumulative percentage
@@ -967,7 +971,9 @@ export default function StudentDashboard() {
                     const slicedAvgs = filteredHistory.map(item => item.avg);
                     const slicedChanges = filteredHistory.map(item => item.change);
 
-                    const avg = dailyValues.length ? Math.round(dailyValues.reduce((s, v) => s + v, 0) / dailyValues.length) : 0;
+                    let totalAttendedCRT = crtHistory.reduce((sum, h) => sum + (h.subjects || []).reduce((sSum, s) => sSum + (s.attended || 0), 0), 0);
+                    let totalConductedCRT = crtHistory.reduce((sum, h) => sum + (h.subjects || []).reduce((sSum, s) => sSum + (s.total || 0), 0), 0);
+                    const avg = totalConductedCRT > 0 ? Math.round((totalAttendedCRT / totalConductedCRT) * 100) : 0;
                     const totalDays = fullHistory.length;
                     const daysPresent = fullHistory.filter(item => item.val > 0).length;
                     const daysAbsent = fullHistory.filter(item => item.val === 0).length;

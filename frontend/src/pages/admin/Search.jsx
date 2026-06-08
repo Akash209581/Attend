@@ -161,12 +161,14 @@ export default function Search() {
                                                         .filter(h => new Date(h.uploadDate) >= new Date('2026-05-22'))
                                                         .sort((a, b) => new Date(a.uploadDate) - new Date(b.uploadDate));
 
-                                                    const dailyValues = crtHistory.map(h => Math.round(parseFloat(h.totalPercentage) || 0));
-
-                                                    let runningSum = 0;
-                                                    const runningAvgs = dailyValues.map((v, i) => {
-                                                        runningSum += v;
-                                                        return Math.round(runningSum / (i + 1));
+                                                    let runningAttended = 0;
+                                                    let runningTotal = 0;
+                                                    const runningAvgs = crtHistory.map(h => {
+                                                        const slotsPresent = (h.subjects || []).reduce((sum, s) => sum + (s.attended || 0), 0);
+                                                        const slotsTotal = (h.subjects || []).reduce((sum, s) => sum + (s.total || 0), 0);
+                                                        runningAttended += slotsPresent;
+                                                        runningTotal += slotsTotal;
+                                                        return runningTotal > 0 ? Math.round((runningAttended / runningTotal) * 100) : 0;
                                                     });
 
                                                     const totalDays = crtHistory.length;

@@ -147,34 +147,51 @@ const parseExcelBuffer = (buffer, totalSlots = 3) => {
         const parsedBatch = parseBatchCell(rawBatchVal) || { batchName: rawBatchVal, percentage: null };
         const batchName = parsedBatch.batchName;
 
-        let pct = 0;
-        let hasPct = false;
-        
-        if (pctIdx >= 0 && row[pctIdx] !== null && String(row[pctIdx]).trim() !== '') {
-            const pctVal = String(row[pctIdx]).trim();
-            pct = parseFloat(pctVal.replace(/%/g, '').trim()) || 0;
-            hasPct = true;
-        }
-        
-        if (!hasPct && parsedBatch.percentage !== null) {
-            pct = parsedBatch.percentage;
+        let attended = 0;
+        let total = totalSlots;
+
+        if (parsedBatch && parsedBatch.attended !== undefined && parsedBatch.attended !== null) {
+            attended = parsedBatch.attended;
+            if (parsedBatch.total !== undefined && parsedBatch.total !== null) {
+                total = parsedBatch.total;
+            } else if (parsedBatch.percentage !== null && parsedBatch.percentage > 0) {
+                total = Math.round(attended / (parsedBatch.percentage / 100));
+            } else {
+                total = totalSlots;
+            }
+        } else {
+            // Fallback: Determine pct from percentage column or batch percentage
+            let pct = 0;
+            let hasPct = false;
+            
+            if (pctIdx >= 0 && row[pctIdx] !== null && String(row[pctIdx]).trim() !== '') {
+                const pctVal = String(row[pctIdx]).trim();
+                pct = parseFloat(pctVal.replace(/%/g, '').trim()) || 0;
+                hasPct = true;
+            }
+            
+            if (!hasPct && parsedBatch.percentage !== null) {
+                pct = parsedBatch.percentage;
+            }
+
+            if (pct > 0 && pct <= 1.0) {
+                pct = pct * 100;
+            }
+
+            attended = Math.round((pct / 100) * totalSlots);
+            total = totalSlots;
         }
 
-        // Convert fraction between 0 and 1 (like 0.3333, 0.6667, 1) to percentage (33.33, 66.67, 100)
-        if (pct > 0 && pct <= 1.0) {
-            pct = pct * 100;
+        if (total <= 0) {
+            total = totalSlots;
         }
 
-        // Determine daily slots attended dynamically
-        const attended = Math.round((pct / 100) * totalSlots);
-
-        // Calculate percentage from slots attended to ensure consistency
-        const calculatedPct = totalSlots > 0 ? Math.round((attended / totalSlots) * 10000) / 100 : 0;
+        const calculatedPct = total > 0 ? Math.round((attended / total) * 10000) / 100 : 0;
 
         const subjects = [{
             subject: batchName,
             attended: attended,
-            total: totalSlots,
+            total: total,
             percentage: calculatedPct,
             batchName: batchName
         }];
@@ -514,13 +531,14 @@ exports.uploadAttendance = async (req, res) => {
             `, [studentIds]);
         }
 
-        // 3. Recalculate overall attendance percentage for these students as the running average of all day-wise uploads
+        // 3. Recalculate overall attendance percentage for these students based on total attended vs total slots
         const studentRolls = records.map(r => r.rollNo.toUpperCase().trim());
         await client.query(`
             UPDATE students s
             SET total_percentage = COALESCE((
-                SELECT ROUND(AVG(total_percentage), 2)
+                SELECT ROUND((SUM(asub.attended)::numeric / NULLIF(SUM(asub.total), 0)::numeric) * 100, 2)
                 FROM attendance_records ar
+                JOIN attendance_subjects asub ON asub.attendance_id = ar.id
                 WHERE ar.roll_no = s.roll_no
             ), 0)
             WHERE s.roll_no = ANY($1::varchar[])
@@ -1000,13 +1018,14 @@ exports.deleteUpload = async (req, res) => {
             `, [studentIds]);
         }
 
-        // 5. Recalculate overall attendance percentage for affected students
+        // 5. Recalculate overall attendance percentage for affected students based on total attended vs total slots
         if (studentRolls.length > 0) {
             await client.query(`
                 UPDATE students s
                 SET total_percentage = COALESCE((
-                    SELECT ROUND(AVG(total_percentage), 2)
+                    SELECT ROUND((SUM(asub.attended)::numeric / NULLIF(SUM(asub.total), 0)::numeric) * 100, 2)
                     FROM attendance_records ar
+                    JOIN attendance_subjects asub ON asub.attendance_id = ar.id
                     WHERE ar.roll_no = s.roll_no
                 ), 0)
                 WHERE s.roll_no = ANY($1::varchar[])
