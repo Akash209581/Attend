@@ -4,7 +4,7 @@ const { pool } = require('../db');
 
 async function inspect() {
     try {
-        const rollNo = '231FA04899';
+        const rollNo = '231FA04867';
         console.log(`=== Inspecting student: ${rollNo} ===`);
         
         // 1. Get student basic info
