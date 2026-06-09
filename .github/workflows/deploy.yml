@@ -26,12 +26,12 @@ jobs:
       - name: Backend - Install and Verify Dependencies
         run: |
           cd backend
-          npm ci
+          npm install
 
       - name: Frontend - Lint
         run: |
           cd frontend
-          npm ci
+          npm install
           npm run lint
 
       - name: Frontend - Build
@@ -70,7 +70,7 @@ jobs:
           rsync -av --delete backend/ "$BACKEND_DEPLOY_DIR/" --exclude node_modules --exclude .env
           # 3. Install production dependencies and restart PM2 process #24
           cd "$BACKEND_DEPLOY_DIR"
-          npm ci --omit=dev
+          npm install --omit=dev
           pm2 restart 24
 
       - name: Deploy Frontend
@@ -81,3 +81,4 @@ jobs:
           mkdir -p "$FRONTEND_DEPLOY_DIR"
           # 2. Sync built static assets
           rsync -av --delete frontend/dist/ "$FRONTEND_DEPLOY_DIR/"
+
