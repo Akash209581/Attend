@@ -1023,7 +1023,7 @@ export default function StudentDashboard() {
                                 }
                             }
                         },
-                        colors: ['#10b981'],
+                        colors: ['#0ac285ff'],
                         dataLabels: {
                             enabled: true,
                             formatter: v => (v > 0 ? '+' : '') + v + '%',
