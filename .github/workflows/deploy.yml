@@ -1,0 +1,83 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-build:
+    # Build and test are run on GitHub's hosted runners to keep your server lightweight
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      - name: Backend - Install and Verify Dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Frontend - Lint
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+
+      - name: Frontend - Build
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Upload Frontend Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+
+  deploy:
+    needs: test-and-build
+    # Runs on your local server where you registered the GitHub Actions Self-Hosted Runner
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Frontend Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Deploy Backend
+        env:
+          BACKEND_DEPLOY_DIR: "/data/projects/docker-apps/Attend/backend"
+        run: |
+          # 1. Ensure target backend directory exists
+          mkdir -p "$BACKEND_DEPLOY_DIR"
+          # 2. Sync files from build workspace to production directory
+          rsync -av --delete backend/ "$BACKEND_DEPLOY_DIR/" --exclude node_modules --exclude .env
+          # 3. Install production dependencies and restart PM2 process #24
+          cd "$BACKEND_DEPLOY_DIR"
+          npm ci --omit=dev
+          pm2 restart 24
+
+      - name: Deploy Frontend
+        env:
+          FRONTEND_DEPLOY_DIR: "/data/projects/docker-apps/Attend/frontend/dist"
+        run: |
+          # 1. Ensure target frontend directory exists
+          mkdir -p "$FRONTEND_DEPLOY_DIR"
+          # 2. Sync built static assets
+          rsync -av --delete frontend/dist/ "$FRONTEND_DEPLOY_DIR/"
