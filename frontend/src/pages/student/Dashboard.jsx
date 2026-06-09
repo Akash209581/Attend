@@ -387,7 +387,7 @@ function AttendancePredictor({ subjects, history }) {
             {subjects.length > 0 && (
                 <div className="space-y-2">
                     <h3 className="text-xs font-bold text-slate-455 dark:text-slate-500 uppercase tracking-wider flex items-center justify-between">
-                        <span>Subject-wise Attendance Requirements</span>
+                        <span>Attendance Requirements</span>
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 normal-case font-medium">(1 day = 3 sessions)</span>
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -429,7 +429,7 @@ function AttendancePredictor({ subjects, history }) {
                                             <span className="text-xs font-mono text-slate-400">{subAttended}/{subTotal} attended</span>
                                             <span className={`text-sm font-black ${subPctReal >= target ? 'text-emerald-500' : subPctReal >= 60 ? 'text-amber-500' : 'text-rose-500'}`}>
                                                 {subPctReal.toFixed(0)}%
-                                              </span>
+                                            </span>
                                         </div>
                                     </div>
 
