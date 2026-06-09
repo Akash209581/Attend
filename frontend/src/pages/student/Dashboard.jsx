@@ -846,7 +846,7 @@ export default function StudentDashboard() {
                             <BookOpen size={28} />
                         </div>
                         <div className="space-y-2 max-w-md">
-                            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Subject-wise Attendance Table</h2>
+                            <h2 className="text-lg font-bold text-slate-800 dark:text-white">Attendance Table</h2>
                             <p className="text-sm text-slate-500 dark:text-slate-400">Present classes are over and CRT classes have started.</p>
                             <div className="inline-block mt-3 px-4 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-semibold text-sm border border-indigo-100 dark:border-indigo-800">
                                 Available when academic year is started
