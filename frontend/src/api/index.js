@@ -24,34 +24,34 @@ api.interceptors.response.use(
 );
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
-export const adminLogin = (d) => api.post('/auth/admin', d);
+export const adminLogin = (d) => api.post('/auth/akashisadmin', d);
 export const studentLogin = (d) => api.post('/auth/student', d);
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
-export const getAdminStats = () => api.get('/admin/stats');
-export const getAdminSections = () => api.get('/admin/sections');
+export const getAdminStats = () => api.get('/akashisadmin/stats');
+export const getAdminSections = () => api.get('/akashisadmin/sections');
 export const getSectionStudents = (sec, page = 1, minThreshold = null, maxThreshold = null) =>
-    api.get(`/admin/sections/${sec}/students`, { params: { page, limit: 50, minThreshold, maxThreshold } });
+    api.get(`/akashisadmin/sections/${sec}/students`, { params: { page, limit: 50, minThreshold, maxThreshold } });
 export const getYearStudents = (year, page = 1) =>
-    api.get(`/admin/year/${year}/students?page=${page}&limit=50`);
-export const searchStudents = (params) => api.get('/admin/search', { params });
-export const getStudentDetail = (rollNo) => api.get(`/admin/students/detail/${rollNo}`);
-export const getUploads = () => api.get('/admin/uploads');
-export const deleteUpload = (id) => api.delete(`/admin/uploads/${id}`);
-export const getSubjectStats = () => api.get('/admin/subject-stats');
+    api.get(`/akashisadmin/year/${year}/students?page=${page}&limit=50`);
+export const searchStudents = (params) => api.get('/akashisadmin/search', { params });
+export const getStudentDetail = (rollNo) => api.get(`/akashisadmin/students/detail/${rollNo}`);
+export const getUploads = () => api.get('/akashisadmin/uploads');
+export const deleteUpload = (id) => api.delete(`/akashisadmin/uploads/${id}`);
+export const getSubjectStats = () => api.get('/akashisadmin/subject-stats');
 export const uploadFile = (formData) =>
-    api.post('/admin/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    api.post('/akashisadmin/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const downloadCSV = (section) =>
-    api.get(`/admin/download/${section}`, { responseType: 'blob' });
+    api.get(`/akashisadmin/download/${section}`, { responseType: 'blob' });
 export const uploadAssessments = (formData) =>
-    api.post('/admin/assessments/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-export const getAssessments = (params) => api.get('/admin/assessments', { params });
-export const deleteAssessmentUpload = (id) => api.delete(`/admin/assessments/uploads/${id}`);
-export const getSectionPerformance = (section) => api.get('/admin/assessments/section-performance', { params: { section } });
+    api.post('/akashisadmin/assessments/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+export const getAssessments = (params) => api.get('/akashisadmin/assessments', { params });
+export const deleteAssessmentUpload = (id) => api.delete(`/akashisadmin/assessments/uploads/${id}`);
+export const getSectionPerformance = (section) => api.get('/akashisadmin/assessments/section-performance', { params: { section } });
 export const getStudentAssessments = () => api.get('/student/assessments');
-export const getSubjectNames = () => api.get('/admin/subject-names');
-export const getStudentsBySubject = (params) => api.get('/admin/students-by-subject', { params });
-export const getDayWiseStats = (year = 'all') => api.get(`/admin/daywise-stats/${year}`);
+export const getSubjectNames = () => api.get('/akashisadmin/subject-names');
+export const getStudentsBySubject = (params) => api.get('/akashisadmin/students-by-subject', { params });
+export const getDayWiseStats = (year = 'all') => api.get(`/akashisadmin/daywise-stats/${year}`);
 
 // ── Student ───────────────────────────────────────────────────────────────────
 export const getStudentProfile = () => api.get('/student/profile');

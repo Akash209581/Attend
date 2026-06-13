@@ -4,11 +4,11 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 
 const titleMap = {
-    '/admin/dashboard': 'Dashboard',
-    '/admin/upload': 'Upload Attendance',
-    '/admin/students': 'All Students',
-    '/admin/assessments': 'Assessments',
-    '/admin/search': 'Search Student',
+    '/akashisadmin/dashboard': 'Dashboard',
+    '/akashisadmin/upload': 'Upload Attendance',
+    '/akashisadmin/students': 'All Students',
+    '/akashisadmin/assessments': 'Assessments',
+    '/akashisadmin/search': 'Search Student',
 };
 
 export default function Navbar({ onToggleSidebar }) {

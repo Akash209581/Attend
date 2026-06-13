@@ -17,7 +17,7 @@ import StudentDashboard from './pages/student/Dashboard';
 
 const ProtectedAdmin = ({ children }) => {
   const { isAdmin } = useAuth();
-  return isAdmin ? children : <Navigate to="/admin" replace />;
+  return isAdmin ? children : <Navigate to="/akashisadmin" replace />;
 };
 
 const ProtectedStudent = ({ children }) => {
@@ -27,7 +27,7 @@ const ProtectedStudent = ({ children }) => {
 
 const AdminEntry = () => {
   const { isAdmin } = useAuth();
-  return isAdmin ? <Navigate to="/admin/dashboard" replace /> : <AdminLogin />;
+  return isAdmin ? <Navigate to="/akashisadmin/dashboard" replace /> : <AdminLogin />;
 };
 
 function AppRoutes() {
@@ -37,7 +37,7 @@ function AppRoutes() {
     <Routes>
       {/* Default redirect */}
       <Route path="/" element={
-        user?.role === 'admin' ? <Navigate to="/admin/dashboard" replace /> :
+        user?.role === 'admin' ? <Navigate to="/akashisadmin/dashboard" replace /> :
           user?.role === 'student' ? <Navigate to="/student/dashboard" replace /> :
             <Navigate to="/student/login" replace />
       } />
@@ -46,11 +46,11 @@ function AppRoutes() {
       <Route path="/student/login" element={<StudentLogin />} />
 
       {/* Admin Routes */}
-      <Route path="/admin">
+      <Route path="/akashisadmin">
         <Route index element={<AdminEntry />} />
         <Route element={<ProtectedAdmin><AdminLayout /></ProtectedAdmin>}>
           <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="upload" element={user?.adminRole === 'restricted_admin' ? <Navigate to="/admin/dashboard" replace /> : <AdminUpload />} />
+          <Route path="upload" element={user?.adminRole === 'restricted_admin' ? <Navigate to="/akashisadmin/dashboard" replace /> : <AdminUpload />} />
 
           <Route path="search" element={<AdminSearch />} />
           <Route path="students" element={<AdminStudents />} />

@@ -6,11 +6,11 @@ import { useAuth } from '../context/AuthContext';
 import cseLogo from '../assets/logo.png';
 
 const links = [
-    { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/admin/upload', icon: Upload, label: 'Upload Attendance' },
-    { to: '/admin/students', icon: Users, label: 'All Students' },
-    { to: '/admin/assessments', icon: Award, label: 'Assessments' },
-    { to: '/admin/search', icon: Search, label: 'Search Student' },
+    { to: '/akashisadmin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/akashisadmin/upload', icon: Upload, label: 'Upload Attendance' },
+    { to: '/akashisadmin/students', icon: Users, label: 'All Students' },
+    { to: '/akashisadmin/assessments', icon: Award, label: 'Assessments' },
+    { to: '/akashisadmin/search', icon: Search, label: 'Search Student' },
 ];
 
 export default function Sidebar({ isOpen, setIsOpen }) {
@@ -18,13 +18,13 @@ export default function Sidebar({ isOpen, setIsOpen }) {
     const navigate = useNavigate();
 
     const filteredLinks = links.filter(
-        link => !(user?.adminRole === 'restricted_admin' && link.to === '/admin/upload')
+        link => !(user?.adminRole === 'restricted_admin' && link.to === '/akashisadmin/upload')
     );
 
     const handleLogout = () => {
         logout();
         if (setIsOpen) setIsOpen(false);
-        navigate('/admin');
+        navigate('/akashisadmin');
     };
 
     return (

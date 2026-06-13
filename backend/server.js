@@ -80,7 +80,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Routes
 app.use('/cseakash/auth', require('./routes/auth'));
-app.use('/cseakash/admin', require('./routes/admin'));
+app.use('/cseakash/akashisadmin', require('./routes/admin'));
 app.use('/cseakash/student', require('./routes/student'));
 
 // Health check

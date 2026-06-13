@@ -227,7 +227,7 @@ export default function AdminDashboard() {
 
                 <button
                     id="assessments-card"
-                    onClick={() => navigate('/admin/assessments')}
+                    onClick={() => navigate('/akashisadmin/assessments')}
                     className="text-left group transition-transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-purple-400 rounded-2xl"
                     title="Click to manage student assessments and marks"
                 >

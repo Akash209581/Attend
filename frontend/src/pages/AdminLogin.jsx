@@ -20,7 +20,7 @@ export default function AdminLogin() {
             const { data } = await adminLogin(form);
             login({ role: 'admin', username: data.username, adminRole: data.adminRole }, data.token);
             toast.success('Welcome back, Admin!');
-            navigate('/admin/dashboard');
+            navigate('/akashisadmin/dashboard');
         } catch (err) {
             toast.error(err.response?.data?.message || 'Login failed');
         } finally {

@@ -5,8 +5,8 @@ const http = require('http');
 
 async function testUpload() {
     // Step 1: Login
-    const loginData = JSON.stringify({ username: 'admin', password: 'admin123' });
-    const loginRes = await makeRequest('POST', 'http://localhost:6000/cseakash/auth/admin', loginData, { 'Content-Type': 'application/json' });
+    const loginData = JSON.stringify({ username: 'admin', password: 'Naidu@akash867' });
+    const loginRes = await makeRequest('POST', 'http://localhost:6000/cseakash/auth/akashisadmin', loginData, { 'Content-Type': 'application/json' });
     const { token } = JSON.parse(loginRes);
     console.log('✅ Admin login successful');
 
@@ -31,7 +31,7 @@ async function testUpload() {
     const footer = Buffer.from(`\r\n--${boundary}--\r\n`);
     const body = Buffer.concat([header, fileBytes, footer]);
 
-    const uploadRes = await makeRequest('POST', 'http://localhost:6000/cseakash/admin/upload', body, {
+    const uploadRes = await makeRequest('POST', 'http://localhost:6000/cseakash/akashisadmin/upload', body, {
         'Authorization': `Bearer ${token}`,
         'Content-Type': `multipart/form-data; boundary=${boundary}`,
         'Content-Length': body.length,
@@ -53,7 +53,7 @@ async function testUpload() {
         const header4 = Buffer.from(parts4.join(''));
         const body4 = Buffer.concat([header4, fileBytes4, footer]);
 
-        const uploadRes4 = await makeRequest('POST', 'http://localhost:6000/cseakash/admin/upload', body4, {
+        const uploadRes4 = await makeRequest('POST', 'http://localhost:6000/cseakash/akashisadmin/upload', body4, {
             'Authorization': `Bearer ${token}`,
             'Content-Type': `multipart/form-data; boundary=${boundary}`,
             'Content-Length': body4.length,
@@ -63,7 +63,7 @@ async function testUpload() {
     }
 
     // Step 4: Get stats
-    const statsRes = await makeRequest('GET', 'http://localhost:6000/cseakash/admin/stats', null, {
+    const statsRes = await makeRequest('GET', 'http://localhost:6000/cseakash/akashisadmin/stats', null, {
         'Authorization': `Bearer ${token}`
     });
     const stats = JSON.parse(statsRes);
